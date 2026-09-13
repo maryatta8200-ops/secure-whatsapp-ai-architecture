@@ -1,0 +1,14 @@
+# Gradle
+.gradle/
+/build/
+*/build/
+local.properties
+
+# IDE
+.idea/
+*.iml
+.externalNativeBuild/
+.cxx/
+
+# Generated deliverables are copied here by CI for download.
+artifacts/*.apk
