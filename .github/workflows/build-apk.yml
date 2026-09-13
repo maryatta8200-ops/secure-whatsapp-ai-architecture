@@ -47,6 +47,7 @@ jobs:
         if: steps.apk_build.outcome == 'success'
         run: |
           mkdir -p artifacts
+          rm -f artifacts/securewa-build-error.log
           cp app/build/outputs/apk/debug/app-debug.apk artifacts/SecureWA-debug.apk
 
       - name: Commit build diagnostics
@@ -67,5 +68,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f artifacts/SecureWA-debug.apk
+          git add -u artifacts/securewa-build-error.log
           git commit -m "Build SecureWA debug APK [skip ci]" || echo "APK unchanged"
           git push
