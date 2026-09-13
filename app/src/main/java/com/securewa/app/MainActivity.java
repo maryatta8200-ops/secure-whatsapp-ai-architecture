@@ -2,7 +2,10 @@ package com.securewa.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -18,9 +21,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
-
-import java.util.Locale;
 
 /**
  * A small, dependency-free demo of the SecureWA client surface.
@@ -48,15 +50,41 @@ public final class MainActivity extends Activity {
     private LinearLayout activityList;
     private EditText messageInput;
     private Button sendButton;
+    private Button shareButton;
     private TextView responseCard;
     private TextView responseLabel;
+    private SecureStore secureStore;
+    private PrivacyScanner.ScanResult lastScan;
+    private String lastSafeMessage;
+    private boolean redactBeforeShare;
+    private boolean keepAudit;
     private int activityCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        secureStore = new SecureStore(this);
+        redactBeforeShare = secureStore.isRedactionEnabled();
+        keepAudit = secureStore.isAuditEnabled();
         configureWindow();
         setContentView(buildScreen());
+        handleIncomingIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIncomingIntent(intent);
+    }
+
+    private void handleIncomingIntent(Intent intent) {
+        if (intent == null || !Intent.ACTION_SEND.equals(intent.getAction())) return;
+        CharSequence shared = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+        if (shared == null || shared.length() == 0 || messageInput == null) return;
+        messageInput.setText(shared.toString());
+        messageInput.setSelection(messageInput.length());
+        addActivity("Text imported for review", "Nothing shared automatically", TEAL, "now");
     }
 
     private void configureWindow() {
@@ -99,7 +127,7 @@ public final class MainActivity extends Activity {
         activityList.setOrientation(LinearLayout.VERTICAL);
         content.addView(activityList);
         addActivity("Policy check passed", "Message surface ready", GREEN, "now");
-        addActivity("E2E session protected", "Device-only demo mode", TEAL, "2m");
+        addActivity("Encrypted audit vault", "Android Keystore protected", TEAL, "2m");
         content.addView(buildFooter(), new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -148,7 +176,7 @@ public final class MainActivity extends Activity {
         hero.addView(title, wrap());
 
         TextView description = label(
-                "Messages stay protected while policy checks happen before any AI provider sees a request.",
+                "Messages are scanned on-device, audit events are encrypted, and sharing stays under your control.",
                 14, Color.rgb(202, 218, 230), Typeface.NORMAL);
         description.setLineSpacing(0, 1.15f);
         description.setPadding(0, dp(10), 0, dp(16));
@@ -160,7 +188,7 @@ public final class MainActivity extends Activity {
         row.addView(dot, new LinearLayout.LayoutParams(dp(20), ViewGroup.LayoutParams.WRAP_CONTENT));
         TextView state = label("Protection active", 13, Color.WHITE, Typeface.BOLD);
         row.addView(state, wrap());
-        TextView mode = label("  •  local demo", 12, Color.rgb(174, 196, 210), Typeface.NORMAL);
+        TextView mode = label("  •  device protected", 12, Color.rgb(174, 196, 210), Typeface.NORMAL);
         row.addView(mode, wrap());
         hero.addView(row, wrap());
 
@@ -174,14 +202,14 @@ public final class MainActivity extends Activity {
         LinearLayout list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
         list.addView(controlCard(
-                "End-to-end encrypted", "Only your devices can read the conversation.",
+                "Encrypted local vault", "Audit metadata is protected by the Android Keystore.",
                 "ACTIVE", "✓", GREEN));
         list.addView(controlCard(
-                "PII redaction", "Sensitive details are checked before AI routing.",
+                "PII redaction", "Common emails, phones, cards, and keys are caught on-device.",
                 "READY", "✦", TEAL));
         list.addView(controlCard(
-                "Provider routing", "The gateway chooses a provider without exposing keys.",
-                "3 LAYERS", "↗", AMBER));
+                "WhatsApp handoff", "Share only after review; SecureWA never reads your chats.",
+                "USER-DRIVEN", "↗", AMBER));
         return list;
     }
 
@@ -232,7 +260,7 @@ public final class MainActivity extends Activity {
         lock.setGravity(Gravity.CENTER);
         lock.setBackground(circle(PALE_GREEN));
         composerTop.addView(lock, new LinearLayout.LayoutParams(dp(34), dp(34)));
-        TextView prompt = label("Ask in private", 15, INK, Typeface.BOLD);
+        TextView prompt = label("Review before sharing", 15, INK, Typeface.BOLD);
         prompt.setPadding(dp(10), 0, 0, 0);
         composerTop.addView(prompt, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         TextView local = label("ON DEVICE", 9, TEAL, Typeface.BOLD);
@@ -259,7 +287,7 @@ public final class MainActivity extends Activity {
         composer.addView(messageInput, inputParams);
 
         sendButton = new Button(this);
-        sendButton.setText("Analyze securely");
+        sendButton.setText("Scan & prepare safely");
         sendButton.setTextColor(Color.WHITE);
         sendButton.setTextSize(14);
         sendButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
@@ -294,6 +322,25 @@ public final class MainActivity extends Activity {
         responseParams.topMargin = dp(7);
         composer.addView(responseCard, responseParams);
 
+        shareButton = new Button(this);
+        shareButton.setText("Share safe version to WhatsApp");
+        shareButton.setTextColor(TEAL);
+        shareButton.setTextSize(14);
+        shareButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        shareButton.setAllCaps(false);
+        shareButton.setGravity(Gravity.CENTER);
+        shareButton.setPadding(dp(12), 0, dp(12), 0);
+        shareButton.setMinHeight(0);
+        shareButton.setMinWidth(0);
+        shareButton.setBackground(roundWithStroke(Color.WHITE, TEAL, 12, dp(1)));
+        shareButton.setContentDescription("Share the reviewed message to WhatsApp");
+        shareButton.setVisibility(View.GONE);
+        shareButton.setOnClickListener(v -> shareToWhatsApp());
+        LinearLayout.LayoutParams shareParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        shareParams.topMargin = dp(9);
+        composer.addView(shareButton, shareParams);
+
         LinearLayout.LayoutParams composerParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         composerParams.bottomMargin = dp(4);
@@ -307,25 +354,90 @@ public final class MainActivity extends Activity {
             return;
         }
 
+        final PrivacyScanner.ScanResult scan = PrivacyScanner.scan(input);
+        final String safeMessage = redactBeforeShare ? scan.redactedText : input;
+        lastScan = scan;
+        lastSafeMessage = safeMessage;
+
         hideKeyboard();
         messageInput.setEnabled(false);
         sendButton.setEnabled(false);
-        sendButton.setText("Checking policy…");
+        sendButton.setText("Scanning on device…");
         responseLabel.setVisibility(View.GONE);
         responseCard.setVisibility(View.GONE);
+        shareButton.setVisibility(View.GONE);
 
-        // The demo deliberately does not make a network call. This delay makes
-        // the local policy-check state visible without pretending to be a model.
+        // Keep the scan local. The only persisted value is encrypted metadata,
+        // never the message itself.
         messageInput.postDelayed(() -> {
             messageInput.setEnabled(true);
             sendButton.setEnabled(true);
-            sendButton.setText("Analyze securely");
+            sendButton.setText("Scan & prepare safely");
             responseLabel.setVisibility(View.VISIBLE);
             responseCard.setVisibility(View.VISIBLE);
-            String preview = input.length() > 54 ? input.substring(0, 54).trim() + "…" : input;
-            responseCard.setText("✓  Policy check passed\n\n“" + preview + "”\n\nYour message is ready for a protected gateway handoff. No API key or conversation data is stored by this demo.");
-            addActivity("Private request checked", "No data left this device", GREEN, "now");
+            shareButton.setVisibility(View.VISIBLE);
+            String preview = safeMessage.length() > 120
+                    ? safeMessage.substring(0, 120).trim() + "…"
+                    : safeMessage;
+            boolean saved = keepAudit && secureStore.saveAudit(
+                    "policy_passed|findings=" + scan.findingCount()
+                            + "|redaction=" + redactBeforeShare
+                            + "|at=" + System.currentTimeMillis());
+            String auditLine = saved
+                    ? "Encrypted audit event saved on this device."
+                    : "Audit event was not saved; no plaintext fallback was used.";
+            responseCard.setText("✓  Policy check passed\n\n"
+                    + scan.summary() + "\n\nSafe handoff preview:\n“"
+                    + preview + "”\n\n" + auditLine);
+            addActivity("Private request checked", saved
+                    ? "Encrypted metadata only" : "Audit write unavailable", GREEN, "now");
         }, 520);
+    }
+
+    private void shareToWhatsApp() {
+        if (lastSafeMessage == null || lastSafeMessage.length() == 0) {
+            messageInput.setError("Scan a message before sharing");
+            return;
+        }
+
+        Intent share = new Intent(Intent.ACTION_SEND);
+        share.setType("text/plain");
+        share.putExtra(Intent.EXTRA_TEXT, lastSafeMessage);
+
+        String whatsappPackage = findWhatsAppPackage();
+        if (whatsappPackage != null) share.setPackage(whatsappPackage);
+
+        try {
+            if (whatsappPackage == null) {
+                startActivity(Intent.createChooser(share, "Share reviewed message"));
+            } else {
+                startActivity(share);
+            }
+            secureStore.saveAudit("whatsapp_handoff|redaction=" + redactBeforeShare
+                    + "|at=" + System.currentTimeMillis());
+            addActivity("WhatsApp handoff opened", redactBeforeShare
+                    ? "Redacted text shared" : "User-approved original shared", TEAL, "now");
+        } catch (ActivityNotFoundException ignored) {
+            new AlertDialog.Builder(this)
+                    .setTitle("WhatsApp is not installed")
+                    .setMessage("Install WhatsApp or WhatsApp Business, then try the handoff again. SecureWA cannot read or send chat messages by itself.")
+                    .setPositiveButton("OK", null)
+                    .show();
+        }
+    }
+
+    private String findWhatsAppPackage() {
+        String[] packages = {"com.whatsapp", "com.whatsapp.w4b"};
+        PackageManager packageManager = getPackageManager();
+        for (String packageName : packages) {
+            Intent probe = new Intent(Intent.ACTION_SEND);
+            probe.setType("text/plain");
+            probe.setPackage(packageName);
+            if (packageManager.resolveActivity(probe, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+                return packageName;
+            }
+        }
+        return null;
     }
 
     private void addSectionHeading(LinearLayout parent, String eyebrowText, String titleText) {
@@ -389,17 +501,74 @@ public final class MainActivity extends Activity {
         details.setContentDescription("Show architecture details");
         footer.addView(details, wrap());
 
-        TextView note = label("No network permission  •  SecureWA demo 1.0", 11, MUTED, Typeface.NORMAL);
+        TextView privacy = label("Privacy settings", 13, INK, Typeface.BOLD);
+        privacy.setGravity(Gravity.CENTER);
+        privacy.setPadding(dp(12), dp(10), dp(12), dp(10));
+        privacy.setOnClickListener(v -> showPrivacyDialog());
+        privacy.setContentDescription("Open privacy settings");
+        footer.addView(privacy, wrap());
+
+        TextView note = label("No network permission  •  SecureWA 1.1", 11, MUTED, Typeface.NORMAL);
         note.setGravity(Gravity.CENTER);
         note.setPadding(0, dp(4), 0, 0);
         footer.addView(note, wrap());
         return footer;
     }
 
+    private void showPrivacyDialog() {
+        LinearLayout settings = new LinearLayout(this);
+        settings.setOrientation(LinearLayout.VERTICAL);
+        settings.setPadding(dp(6), dp(2), dp(6), 0);
+
+        TextView summary = label(
+                "Choose what can leave this device. SecureWA never reads WhatsApp chats; sharing always requires your tap.",
+                13, MUTED, Typeface.NORMAL);
+        summary.setLineSpacing(0, 1.12f);
+        settings.addView(summary, wrap());
+
+        Switch redact = new Switch(this);
+        redact.setText("Redact common PII before handoff");
+        redact.setTextColor(INK);
+        redact.setTextSize(14);
+        redact.setChecked(redactBeforeShare);
+        redact.setPadding(0, dp(12), 0, 0);
+        settings.addView(redact, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        Switch audit = new Switch(this);
+        audit.setText("Keep encrypted policy audit metadata");
+        audit.setTextColor(INK);
+        audit.setTextSize(14);
+        audit.setChecked(keepAudit);
+        audit.setPadding(0, dp(4), 0, 0);
+        settings.addView(audit, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView count = label("Encrypted entries on device: " + secureStore.auditCount(), 12, MUTED, Typeface.NORMAL);
+        count.setPadding(0, dp(12), 0, 0);
+        settings.addView(count, wrap());
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Privacy settings")
+                .setView(settings)
+                .setNegativeButton("Clear audit", (d, which) -> {
+                    secureStore.clearAudits();
+                    addActivity("Audit vault cleared", "No message content was stored", AMBER, "now");
+                })
+                .setPositiveButton("Save", (d, which) -> {
+                    redactBeforeShare = redact.isChecked();
+                    keepAudit = audit.isChecked();
+                    secureStore.setRedactionEnabled(redactBeforeShare);
+                    secureStore.setAuditEnabled(keepAudit);
+                })
+                .create();
+        dialog.show();
+    }
+
     private void showArchitectureDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("SecureWA architecture")
-                .setMessage("1. Device session\nMessages begin in an encrypted conversation surface.\n\n2. Policy boundary\nPII and policy checks happen before provider routing.\n\n3. Server-side gateway\nA backend owns provider credentials and selects the least-privilege route.\n\n4. Minimal response\nOnly the approved response returns to the device.\n\nThis APK is a local UI demo. It does not connect to WhatsApp or an AI provider.")
+                .setMessage("1. Device session\nMessages begin in a review surface.\n\n2. Policy boundary\nCommon PII is detected and redacted before sharing.\n\n3. WhatsApp handoff\nThe Android share sheet opens WhatsApp only after your tap; this app cannot read chats.\n\n4. Server-side AI gateway\nA production gateway should own provider credentials and select the least-privilege route.\n\nThis APK has no network permission and does not call an AI provider directly.")
                 .setPositiveButton("Got it", null)
                 .show();
     }
