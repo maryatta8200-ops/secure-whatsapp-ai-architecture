@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Secure WhatsApp AI</string>
+    <string name="capability_screen_title">Capability status</string>
+    <string name="capability_screen_subtitle">Only capabilities implemented and verified in this build are marked available. Everything else is shown as unavailable rather than simulated.</string>
+    <string name="status_available">Available</string>
+    <string name="status_unavailable">Unavailable until milestone %1$d</string>
+    <string name="supported_user_types">Supported user types</string>
+</resources>

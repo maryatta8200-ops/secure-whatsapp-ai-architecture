@@ -1,0 +1,49 @@
+# --- Gradle / build output -------------------------------------------------
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+outputs/
+*.apk
+*.aab
+*.ap_
+
+# --- Android Studio / IDE --------------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+.kotlin/
+navigation/
+
+# --- Signing and secrets (never commit) -------------------------------------
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+google-services.json
+.env
+.env.*
+*.pem
+*.p12
+*.key
+secrets/
+**/secrets.json
+
+# --- Generated sensitive data ----------------------------------------------
+/backups/
+*.backup
+*.sensitive
+
+# --- Sandbox-only toolchain (installed by tools/setup-toolchain.sh) --------
+.toolchain/
+/local-verify-build/
+
+# --- OS --------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# --- Logs ------------------------------------------------------------------
+*.log
