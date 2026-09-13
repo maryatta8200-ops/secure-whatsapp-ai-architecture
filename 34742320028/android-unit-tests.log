@@ -1,0 +1,129 @@
+Downloading https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
+..................................................................................................................................
+
+Welcome to Gradle 8.11.1!
+
+Here are the highlights of this release:
+ - Parallel load and store for Configuration Cache
+ - Java compilation errors at the end of the build output
+ - Consolidated report for warnings and deprecations
+
+For more details see https://docs.gradle.org/8.11.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :data:preBuild UP-TO-DATE
+> Task :data:preDebugBuild UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugResValues
+> Task :data:writeDebugAarMetadata
+> Task :data:generateDebugResValues FROM-CACHE
+> Task :app:generateDebugResources
+> Task :data:generateDebugResources
+> Task :data:packageDebugResources
+> Task :data:extractDeepLinksDebug
+> Task :data:processDebugManifest
+> Task :data:compileDebugLibraryResources
+> Task :data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :data:parseDebugLocalResources
+> Task :core:processResources NO-SOURCE
+> Task :data:javaPreCompileDebug
+> Task :data:preDebugUnitTestBuild UP-TO-DATE
+> Task :data:generateDebugRFile
+> Task :data:generateDebugUnitTestResValues FROM-CACHE
+> Task :data:checkDebugUnitTestAarMetadata
+> Task :data:mapDebugUnitTestSourceSetPaths
+> Task :data:generateDebugUnitTestResources
+> Task :data:mergeDebugUnitTestResources
+> Task :data:processDebugUnitTestManifest
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :data:javaPreCompileDebugUnitTest
+> Task :data:mergeDebugShaders
+> Task :data:compileDebugShaders NO-SOURCE
+> Task :data:generateDebugAssets UP-TO-DATE
+> Task :data:mergeDebugAssets
+> Task :data:generateDebugUnitTestAssets UP-TO-DATE
+> Task :data:packageDebugAssets
+> Task :data:mergeDebugUnitTestAssets
+> Task :data:mergeDebugJniLibFolders
+> Task :data:mergeDebugNativeLibs NO-SOURCE
+> Task :data:copyDebugJniLibsProjectOnly
+> Task :data:processDebugUnitTestResources
+> Task :data:packageDebugUnitTestForUnitTest
+> Task :data:generateDebugUnitTestConfig
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug FROM-CACHE
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug FROM-CACHE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeDebugResources
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:processDebugResources
+> Task :app:mergeDebugJniLibFolders
+> Task :app:checkDebugDuplicateClasses
+> Task :app:validateSigningDebug
+> Task :core:compileKotlin
+> Task :core:compileJava NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar
+> Task :app:mergeExtDexDebug
+> Task :data:kspDebugKotlin
+> Task :app:writeDebugAppMetadata
+> Task :app:mergeDebugNativeLibs
+> Task :app:writeDebugSigningConfigVersions
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so.
+
+> Task :data:kspDebugKotlin
+w: [ksp] /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/data/src/main/kotlin/com/securewa/data/db/entity/ConfigurationEntities.kt:66: to_type_key column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/data/src/main/kotlin/com/securewa/data/db/entity/ConfigurationEntities.kt:178: receiver_credential_slot_id column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/data/src/main/kotlin/com/securewa/data/db/entity/MessagingEntities.kt:166: twilio_configuration_id column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+
+> Task :data:compileDebugKotlin
+> Task :data:compileDebugJavaWithJavac
+> Task :data:processDebugJavaRes
+> Task :data:bundleLibRuntimeToJarDebug
+> Task :data:bundleLibCompileToJarDebug
+> Task :data:bundleLibRuntimeToDirDebug
+> Task :app:mergeLibDexDebug
+> Task :data:kspDebugUnitTestKotlin
+> Task :data:compileDebugUnitTestKotlin
+> Task :data:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :data:processDebugUnitTestJavaRes
+> Task :app:compileDebugKotlin
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:processDebugJavaRes
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+> Task :app:mergeDebugJavaResource
+> Task :app:testDebugUnitTest
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+> Task :data:testDebugUnitTest
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1789280280164.json
+
+BUILD SUCCESSFUL in 2m 53s
+80 actionable tasks: 75 executed, 5 from cache
