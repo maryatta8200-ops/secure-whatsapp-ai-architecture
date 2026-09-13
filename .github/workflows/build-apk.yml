@@ -31,12 +31,36 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+        id: apk_build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          gradle --no-daemon assembleDebug 2>&1 | tee "$RUNNER_TEMP/securewa-build.log"
+
+      - name: Preserve build diagnostics when compilation fails
+        if: steps.apk_build.outcome == 'failure'
+        run: |
+          mkdir -p artifacts
+          cp "$RUNNER_TEMP/securewa-build.log" artifacts/securewa-build-error.log
 
       - name: Copy APK to a stable path
+        if: steps.apk_build.outcome == 'success'
         run: |
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk artifacts/SecureWA-debug.apk
+
+      - name: Commit build diagnostics
+        if: steps.apk_build.outcome == 'failure'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f artifacts/securewa-build-error.log
+          git commit -m "Capture Android build diagnostics [skip ci]" || echo "Diagnostics unchanged"
+          git push
+
+      - name: Fail when the APK build fails
+        if: steps.apk_build.outcome == 'failure'
+        run: exit 1
 
       - name: Commit APK to the session branch
         run: |
