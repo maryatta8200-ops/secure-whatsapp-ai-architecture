@@ -1,154 +1,164 @@
+Downloading https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
+..................................................................................................................................
+
+Welcome to Gradle 8.11.1!
+
+Here are the highlights of this release:
+ - Parallel load and store for Configuration Cache
+ - Java compilation errors at the end of the build output
+ - Consolidated report for warnings and deprecations
+
+For more details see https://docs.gradle.org/8.11.1/release-notes.html
+
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
-> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :app:buildKotlinToolingMetadata
+> Task :data:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :data:preBuild UP-TO-DATE
 > Task :app:preBuild UP-TO-DATE
-> Task :app:preReleaseBuild UP-TO-DATE
-> Task :core:compileKotlin UP-TO-DATE
-> Task :core:compileJava NO-SOURCE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :data:preDebugBuild UP-TO-DATE
+> Task :data:generateDebugResValues
+> Task :data:generateDebugResources
+> Task :data:packageDebugResources
+> Task :data:parseDebugLocalResources
 > Task :core:processResources NO-SOURCE
+> Task :data:javaPreCompileDebug
+> Task :data:preDebugUnitTestBuild UP-TO-DATE
+> Task :data:writeDebugAarMetadata
+> Task :data:generateDebugRFile
+> Task :app:checkDebugAarMetadata
+> Task :app:generateDebugResValues FROM-CACHE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :data:checkDebugUnitTestAarMetadata
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:parseDebugLocalResources
+> Task :app:extractDeepLinksDebug
+> Task :app:mergeDebugResources
+> Task :data:generateDebugUnitTestResValues FROM-CACHE
+> Task :data:compileDebugLibraryResources
+> Task :data:mapDebugUnitTestSourceSetPaths
+> Task :data:generateDebugUnitTestResources
+> Task :data:extractDeepLinksDebug FROM-CACHE
+> Task :data:mergeDebugUnitTestResources
+> Task :data:javaPreCompileDebugUnitTest
+> Task :app:processDebugMainManifest
+> Task :data:processDebugManifest
+> Task :data:mergeDebugShaders
+> Task :data:processDebugUnitTestManifest
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug FROM-CACHE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:processDebugManifestForPackage
+> Task :data:compileDebugShaders NO-SOURCE
+> Task :data:generateDebugAssets UP-TO-DATE
+> Task :data:processDebugUnitTestResources
+> Task :data:mergeDebugAssets
+> Task :data:generateDebugUnitTestAssets UP-TO-DATE
+> Task :data:packageDebugAssets
+> Task :data:mergeDebugUnitTestAssets
+> Task :data:packageDebugUnitTestForUnitTest
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :data:generateDebugUnitTestConfig
+> Task :app:processDebugResources
+> Task :app:mergeDebugJniLibFolders
+> Task :app:checkDebugDuplicateClasses
+> Task :app:validateSigningDebug
+> Task :core:compileKotlin
+> Task :core:compileJava NO-SOURCE
 > Task :core:classes UP-TO-DATE
-> Task :core:jar UP-TO-DATE
-> Task :app:generateReleaseResValues FROM-CACHE
-> Task :app:checkReleaseAarMetadata
-> Task :app:mapReleaseSourceSetPaths
-> Task :app:generateReleaseResources
-> Task :app:packageReleaseResources
-> Task :app:parseReleaseLocalResources FROM-CACHE
-> Task :app:createReleaseCompatibleScreenManifests
-> Task :app:extractDeepLinksRelease FROM-CACHE
-> Task :app:mergeReleaseResources
-> Task :app:processReleaseMainManifest
-> Task :app:processReleaseManifest
-> Task :app:javaPreCompileRelease FROM-CACHE
-> Task :app:extractProguardFiles
-> Task :app:processReleaseManifestForPackage
-> Task :app:mergeReleaseJniLibFolders
-> Task :app:mergeReleaseNativeLibs
-> Task :app:checkReleaseDuplicateClasses
+> Task :core:jar
+> Task :app:mergeExtDexDebug
+> Task :data:kspDebugKotlin
+> Task :app:mergeLibDexDebug
+> Task :app:mergeDebugNativeLibs
 
-> Task :app:stripReleaseDebugSymbols
+> Task :app:stripDebugDebugSymbols
 Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so.
 
-> Task :app:desugarReleaseFileDependencies
-> Task :app:mergeReleaseStartupProfile
-> Task :app:extractReleaseNativeSymbolTables
-> Task :app:processReleaseResources
-> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
-> Task :app:mergeReleaseShaders
-> Task :app:mergeReleaseArtProfile
-> Task :app:compileReleaseShaders NO-SOURCE
-> Task :app:generateReleaseAssets UP-TO-DATE
-> Task :app:mergeReleaseAssets
-> Task :app:compressReleaseAssets
-> Task :app:extractReleaseVersionControlInfo
-> Task :app:collectReleaseDependencies
-> Task :app:optimizeReleaseResources
-> Task :app:sdkReleaseDependencyData
-> Task :app:writeReleaseAppMetadata
-> Task :app:writeReleaseSigningConfigVersions
-> Task :app:processApplicationManifestReleaseForBundle
-> Task :app:configureReleaseDependencies
-> Task :app:parseReleaseIntegrityConfig
-> Task :app:preDebugBuild UP-TO-DATE
-> Task :app:bundleReleaseResources
-> Task :app:checkDebugAarMetadata UP-TO-DATE
-> Task :app:generateDebugResValues UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths UP-TO-DATE
-> Task :app:generateDebugResources UP-TO-DATE
-> Task :app:mergeDebugResources UP-TO-DATE
-> Task :app:packageDebugResources UP-TO-DATE
-> Task :app:parseDebugLocalResources UP-TO-DATE
-> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
-> Task :app:extractDeepLinksDebug UP-TO-DATE
-> Task :app:processDebugMainManifest UP-TO-DATE
-> Task :app:processDebugManifest UP-TO-DATE
-> Task :app:processDebugManifestForPackage UP-TO-DATE
-> Task :app:processDebugResources UP-TO-DATE
-> Task :app:compileDebugKotlin UP-TO-DATE
-> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :app:compileDebugKotlin
 > Task :app:compileDebugJavaWithJavac NO-SOURCE
-> Task :app:bundleDebugClassesToCompileJar UP-TO-DATE
-> Task :app:preDebugAndroidTestBuild SKIPPED
-> Task :app:generateDebugAndroidTestResValues FROM-CACHE
-> Task :app:mergeExtDexRelease
-> Task :app:generateDebugAndroidTestLintModel
-> Task :app:generateDebugLintReportModel
-> Task :app:preDebugUnitTestBuild UP-TO-DATE
-> Task :app:generateDebugUnitTestLintModel
-> Task :app:compileReleaseKotlin
-> Task :app:compileReleaseJavaWithJavac NO-SOURCE
-> Task :app:generateReleaseLintVitalReportModel
-> Task :app:dexBuilderRelease
-> Task :app:mergeReleaseGlobalSynthetics
-> Task :app:processReleaseJavaRes
-> Task :app:mergeReleaseJavaResource
-> Task :app:mergeDexRelease
-> Task :app:compileReleaseArtProfile
-> Task :app:packageRelease
-> Task :app:createReleaseApkListingFileRedirect
-> Task :app:buildReleasePreBundle
-> Task :app:packageReleaseBundle
-> Task :app:signReleaseBundle
-> Task :app:produceReleaseBundleIdeListingFile
-> Task :app:createReleaseBundleListingFileRedirect
-> Task :app:bundleRelease
-> Task :app:lintAnalyzeDebugAndroidTest
-> Task :app:lintVitalAnalyzeRelease
-> Task :app:lintVitalReportRelease
-> Task :app:lintVitalRelease
-> Task :app:assembleRelease
-> Task :app:lintAnalyzeDebugUnitTest
-> Task :app:lintAnalyzeDebug
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:processDebugJavaRes
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+> Task :app:mergeDebugJavaResource
 
-> Task :app:lintReportDebug
-Wrote HTML report to file:///home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/app/build/reports/lint-results-debug.html
+> Task :data:kspDebugKotlin
+w: [ksp] /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/data/src/main/kotlin/com/securewa/data/db/entity/ConfigurationEntities.kt:66: to_type_key column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/data/src/main/kotlin/com/securewa/data/db/entity/ConfigurationEntities.kt:178: receiver_credential_slot_id column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
+w: [ksp] /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/data/src/main/kotlin/com/securewa/data/db/entity/MessagingEntities.kt:166: twilio_configuration_id column references a foreign key but it is not part of an index. This may trigger full table scans whenever parent table is modified so you are highly advised to create an index that covers this column.
 
-> Task :app:lintDebug FAILED
-Lint found 2 errors, 25 warnings. First failure:
+> Task :app:testDebugUnitTest
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+> Task :data:compileDebugKotlin
+> Task :data:compileDebugJavaWithJavac
+> Task :data:processDebugJavaRes
+> Task :data:bundleLibRuntimeToJarDebug
+> Task :data:bundleLibCompileToJarDebug
+> Task :data:kspDebugUnitTestKotlin
+> Task :data:compileDebugUnitTestKotlin
+> Task :data:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :data:processDebugUnitTestJavaRes
 
-/home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/app/src/main/AndroidManifest.xml:14: Error: Class referenced in the manifest, com.securewa.architecture.SecureWaApplication, was not found in the project or the libraries [MissingClass]
-        android:name=".SecureWaApplication"
-                      ~~~~~~~~~~~~~~~~~~~~
+> Task :data:testDebugUnitTest
 
-The full lint text report is located at:
-  /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1789276037343.json
+SecureWaDatabaseTest > audit events survive the deletion of the agent they describe FAILED
+    android.database.sqlite.SQLiteConstraintException at SQLiteConnectionNatives.java:-2
+
+SecureWaDatabaseTest > two agents can share a credential slot without sharing anything else FAILED
+    android.database.sqlite.SQLiteConstraintException at SQLiteConnectionNatives.java:-2
+
+SecureWaDatabaseTest > routing rules are returned in evaluation order FAILED
+    android.database.sqlite.SQLiteConstraintException at SQLiteConnectionNatives.java:-2
+
+SecureWaDatabaseTest > message reads are bounded by a window FAILED
+    android.database.sqlite.SQLiteConstraintException at SQLiteConnectionNatives.java:-2
+
+SecureWaDatabaseTest > deleting a number removes its agents but keeps its conversations FAILED
+    android.database.sqlite.SQLiteConstraintException at SQLiteConnectionNatives.java:-2
+
+SecureWaDatabaseTest > log retention removes only rows older than the window FAILED
+    java.lang.AssertionError at SecureWaDatabaseTest.kt:417
+
+SecureWaDatabaseTest > deleting an agent keeps its conversations and messages FAILED
+    android.database.sqlite.SQLiteConstraintException at SQLiteConnectionNatives.java:-2
+
+17 tests completed, 7 failed
+
+> Task :data:testDebugUnitTest FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1789278197137.json
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':app:lintDebug'.
-> Lint found errors in the project; aborting build.
-  
-  Fix the issues identified by lint, or create a baseline to see only new errors.
-  To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
-  ```
-  android {
-      lint {
-          baseline = file("lint-baseline.xml")
-      }
-  }
-  ```
-  For more details, see https://developer.android.com/studio/write/lint#snapshot
-  
-  Lint found 2 errors, 25 warnings. First failure:
-  
-  /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/app/src/main/AndroidManifest.xml:14: Error: Class referenced in the manifest, com.securewa.architecture.SecureWaApplication, was not found in the project or the libraries [MissingClass]
-          android:name=".SecureWaApplication"
-                        ~~~~~~~~~~~~~~~~~~~~
-  
-  The full lint text report is located at:
-    /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+Execution failed for task ':data:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/data/build/reports/tests/testDebugUnitTest/index.html
 
 * Try:
-> Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
 
 * Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:lintDebug'.
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':data:testDebugUnitTest'.
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
@@ -180,33 +190,14 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:lin
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-Caused by: java.lang.RuntimeException: Lint found errors in the project; aborting build.
-
-Fix the issues identified by lint, or create a baseline to see only new errors.
-To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
-```
-android {
-    lint {
-        baseline = file("lint-baseline.xml")
-    }
-}
-```
-For more details, see https://developer.android.com/studio/write/lint#snapshot
-
-Lint found 2 errors, 25 warnings. First failure:
-
-/home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/app/src/main/AndroidManifest.xml:14: Error: Class referenced in the manifest, com.securewa.architecture.SecureWaApplication, was not found in the project or the libraries [MissingClass]
-        android:name=".SecureWaApplication"
-                      ~~~~~~~~~~~~~~~~~~~~
-
-The full lint text report is located at:
-  /home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
-	at com.android.build.gradle.internal.lint.AndroidLintWorkAction$Companion.maybeThrowException(AndroidLintWorkAction.kt:235)
-	at com.android.build.gradle.internal.lint.AndroidLintTextOutputTask.doTaskAction(AndroidLintTextOutputTask.kt:109)
-	at com.android.build.gradle.internal.tasks.NonIncrementalTask$taskAction$$inlined$recordTaskAction$1.invoke(BaseTask.kt:79)
-	at com.android.build.gradle.internal.tasks.Blocks.recordSpan(Blocks.java:51)
-	at com.android.build.gradle.internal.tasks.NonIncrementalTask.taskAction(NonIncrementalTask.kt:78)
-	at jdk.internal.reflect.GeneratedMethodAccessor97.invoke(Unknown Source)
+Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:///home/runner/work/secure-whatsapp-ai-architecture/secure-whatsapp-ai-architecture/data/build/reports/tests/testDebugUnitTest/index.html
+	at org.gradle.api.tasks.testing.AbstractTestTask.handleTestFailures(AbstractTestTask.java:707)
+	at org.gradle.api.tasks.testing.AbstractTestTask.handleCollectedResults(AbstractTestTask.java:541)
+	at org.gradle.api.tasks.testing.AbstractTestTask.executeTests(AbstractTestTask.java:536)
+	at org.gradle.api.tasks.testing.Test.executeTests(Test.java:731)
+	at com.android.build.gradle.tasks.factory.AndroidUnitTest.executeTests(AndroidUnitTest.java:171)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
 	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
 	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
@@ -251,8 +242,13 @@ The full lint text report is located at:
 	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
 	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
 	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:75)
-	at org.gradle.internal.Either$Right.fold(Either.java:175)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeAndStoreInCache(BuildCacheStep.java:145)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$executeWithCache$4(BuildCacheStep.java:101)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$executeWithCache$5(BuildCacheStep.java:101)
+	at org.gradle.internal.Try$Success.map(Try.java:175)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithCache(BuildCacheStep.java:85)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$0(BuildCacheStep.java:74)
+	at org.gradle.internal.Either$Left.fold(Either.java:115)
 	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
 	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:73)
 	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:48)
@@ -275,7 +271,7 @@ The full lint text report is located at:
 	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:64)
 	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:43)
 	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.executeWithNonEmptySources(AbstractSkipEmptyWorkStep.java:125)
-	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:56)
+	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:61)
 	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:36)
 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
@@ -327,5 +323,5 @@ The full lint text report is located at:
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
 
 
-BUILD FAILED in 1m 12s
-83 actionable tasks: 60 executed, 5 from cache, 18 up-to-date
+BUILD FAILED in 2m 54s
+77 actionable tasks: 72 executed, 5 from cache
