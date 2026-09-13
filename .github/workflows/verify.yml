@@ -8,6 +8,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write # publish failure logs to the ci-logs orphan branch
+  checks: write
+
 concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
@@ -37,7 +41,10 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
       - name: run :core tests
-        run: ./gradlew :core:test --stacktrace
+        run: |
+          set -o pipefail
+          mkdir -p build-logs
+          ./gradlew :core:test --stacktrace 2>&1 | tee build-logs/core-test.log
       - name: upload core test report
         if: always()
         uses: actions/upload-artifact@v4
@@ -45,6 +52,11 @@ jobs:
           name: core-test-report
           path: core/build/reports/tests/test
           if-no-files-found: ignore
+      - name: publish logs on failure
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tools/ci/publish_log.py build-logs
 
   android:
     name: android build, tests and lint
@@ -69,17 +81,19 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: unit tests
-        run: ./gradlew :app:testDebugUnitTest --stacktrace
+      - name: unit tests and debug apk
+        run: |
+          set -o pipefail
+          mkdir -p build-logs
+          ./gradlew :app:testDebugUnitTest :app:assembleDebug --continue --stacktrace 2>&1 \
+            | tee build-logs/android-unit-tests.log
 
-      - name: assemble debug
-        run: ./gradlew :app:assembleDebug --stacktrace
-
-      - name: assemble release and bundle release
-        run: ./gradlew :app:assembleRelease :app:bundleRelease --stacktrace
-
-      - name: lint
-        run: ./gradlew :app:lintDebug --stacktrace
+      - name: release apk, aab and lint
+        run: |
+          set -o pipefail
+          mkdir -p build-logs
+          ./gradlew :app:assembleRelease :app:bundleRelease :app:lintDebug --continue --stacktrace 2>&1 \
+            | tee build-logs/android-release.log
 
       - name: upload apk and aab
         uses: actions/upload-artifact@v4
@@ -100,3 +114,9 @@ jobs:
             app/build/reports
             app/build/test-results
           if-no-files-found: ignore
+
+      - name: publish logs on failure
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tools/ci/publish_log.py build-logs
