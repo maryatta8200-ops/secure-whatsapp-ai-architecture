@@ -44,6 +44,7 @@ ksp {
 dependencies {
     implementation(project(":core"))
 
+    implementation(libs.okhttp)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
@@ -51,4 +52,5 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.robolectric)
+    testImplementation(libs.mockwebserver)
 }
