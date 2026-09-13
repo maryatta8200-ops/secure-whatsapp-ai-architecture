@@ -25,8 +25,8 @@ channel runs in CI rather than locally.
 
 | # | Milestone | Contents | Status |
 | --- | --- | --- | --- |
-| 1 | Repository and domain core | Gradle multi-module skeleton, version catalog, Gradle wrapper, CI workflow, secret and hygiene scanners, documentation set, and the `:core` domain module: user types, E.164 validation, `NumberRouter`, Twilio signature validation, replay guard, idempotency keys, redaction, rate limiting, retry policy, health states, capability registry. Minimal Compose app shell that reports capability status. | ⏳ in progress — see record below |
-| 2 | Encrypted local persistence | Room schema (numbers, user types and history, agents, routing rules, providers, credential slots, model configuration, conversations, messages, Twilio and channel configuration, inbound receipts, outbound attempts, agent events, application log), DAOs, foreign keys, indexes, unique constraints, migrations, migration tests. | planned |
+| 1 | Repository and domain core | Gradle multi-module skeleton, version catalog, Gradle wrapper, CI workflow, secret and hygiene scanners, documentation set, and the `:core` domain module: user types, E.164 validation, `NumberRouter`, Twilio signature validation, replay guard, idempotency keys, redaction, rate limiting, retry policy, health states, capability registry. Minimal Compose app shell that reports capability status. | ✅ verified — commit `4633aae`, CI run 34739654935 |
+| 2 | Local persistence | Room schema (numbers, user types and history, agents, routing rules, providers, credential slots, model configuration, conversations, messages, Twilio and channel configuration, inbound receipts, outbound attempts, agent events, application log), DAOs, foreign keys, indexes, unique constraints and deletion policies, verified by 18 Robolectric tests against real SQLite. Database encryption of message bodies is deferred to milestone 3, which introduces the key it needs. | ✅ verified — commit `e018ee9`, CI run 34741226163 |
 | 3 | Application lock and credential vault | Passphrase-based application lock, Android Keystore-backed key, encrypted credential slots, encrypted backup/restore primitives. | planned |
 | 4 | AI provider adapters | Gemini, OpenAI, Anthropic and OpenAI-compatible adapters behind one provider interface; configuration snapshots; HTTP-level tests with a local mock server (status handling, auth headers, timeouts, parsing, rate limits). | planned |
 | 5 | Twilio messaging adapter | Authenticated Twilio REST client for outbound WhatsApp, status callback handling, connection-state checks. | planned |
@@ -63,6 +63,48 @@ channel runs in CI rather than locally.
 Both were found in the Gradle output published by the CI failure channel and
 both were fixed at the root (namespace and source packages now agree) rather
 than suppressed.
+
+## Milestone 2 record
+
+| Item | Value |
+| --- | --- |
+| Commits | `f2f9005` persistence layer, `5b21d9d` column naming fix, `c772807` Robolectric SDK fix, `e018ee9` fixture fix |
+| Verified commit | `e018ee9` |
+| Modules | `:data` (Android library, Room + KSP) added to the build |
+| Local domain verification | `tools/local-verify/run.sh` — 90 tests, 90 passed |
+| CI run | https://github.com/maryatta8200-ops/secure-whatsapp-ai-architecture/actions/runs/34741226163 |
+| CI `android` | success — `:data:testDebugUnitTest` (18 tests), `:app:testDebugUnitTest`, `assembleDebug`, `assembleRelease`, `bundleRelease`, `:app:lintDebug`, `:data:lintDebug` |
+| Remote SHA check | local `e018ee9` == remote `e018ee9` |
+
+### Guarantees encoded in the schema
+
+- A registered number is the tenant boundary: `e164` is unique, so the same
+  number cannot be registered twice (asserted by test).
+- User types are reference rows seeded from the domain enum and referenced by
+  foreign key, so an invalid user type is rejected by SQLite (asserted by test).
+- Deleting configuration never deletes history: agents and numbers cascade to
+  the configuration they own, and `SET_NULL` for conversations, messages and
+  audit rows (asserted by test).
+- Inbound receipts and outbound attempts carry unique idempotency keys, and a
+  receipt can be claimed exactly once (asserted by test).
+- Reads are bounded: messages come from a window or a page, and log retention
+  is enforced with a cutoff delete (asserted by test).
+
+### Defects found by verification
+
+1. `@PrimaryKey(name = "storage_key")` named the index rather than the column,
+   so every query against `user_types` failed at build time. Room's query
+   validation caught it.
+2. Robolectric was asked for an API level it does not ship; all tests in the
+   class failed with `UnknownSdk`.
+3. Six tests inserted an agent without the provider and model rows its foreign
+   key requires, and one log-retention assertion had the arithmetic backwards.
+
+### Known limitation carried forward
+
+Message bodies are stored as plain text. The database is protected by
+`allowBackup=false`, the data extraction rules and device encryption, but the
+bodies are not sealed with an application key yet. That ships with milestone 3.
 
 ### What milestone 1 deliberately does not do
 
