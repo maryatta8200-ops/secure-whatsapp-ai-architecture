@@ -55,7 +55,7 @@ object FeatureRegistry {
      * The milestone this build implements. Bumped only when the corresponding
      * verification (local and CI) has passed for the milestone commit.
      */
-    const val CURRENT_MILESTONE: Int = 1
+    const val CURRENT_MILESTONE: Int = 3
 
     fun isAvailable(capability: Capability): Boolean =
         capability.availableFromMilestone <= CURRENT_MILESTONE

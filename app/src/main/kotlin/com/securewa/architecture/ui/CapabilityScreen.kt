@@ -39,7 +39,7 @@ import com.securewa.core.model.UserType
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CapabilityScreen() {
+fun CapabilityScreen(modifier: Modifier = Modifier) {
     val statuses = remember { FeatureRegistry.status() }
     val userTypes = remember { UserType.entries }
 
@@ -49,9 +49,8 @@ fun CapabilityScreen() {
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = modifier
+                .fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

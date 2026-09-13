@@ -24,13 +24,16 @@ class CapabilityStatusTest {
 
     @Test
     fun `messaging and provider capabilities are not claimed before they exist`() {
+        // Sending a message is the core promise of the product, so it is the
+        // capability most likely to be implied by a UI that has not earned it.
         listOf(
             Capability.AI_PROVIDERS,
             Capability.TWILIO_ADAPTER,
             Capability.INBOUND_RECEIVER,
             Capability.MESSAGE_PIPELINE,
-            Capability.CREDENTIAL_VAULT,
-            Capability.LOCAL_PERSISTENCE
+            Capability.NUMBER_MANAGEMENT_UI,
+            Capability.AGENT_MANAGEMENT_UI,
+            Capability.CONVERSATIONS_UI
         ).forEach { capability ->
             assertFalse(
                 "${capability.name} must not be reported as available",
@@ -40,9 +43,25 @@ class CapabilityStatusTest {
     }
 
     @Test
-    fun `implemented milestone one capabilities are available`() {
+    fun `no capability is claimed ahead of the milestone that delivers it`() {
+        FeatureRegistry.status().forEach { status ->
+            if (status.capability.availableFromMilestone > FeatureRegistry.CURRENT_MILESTONE) {
+                assertFalse(
+                    "${status.capability.name} is scheduled for milestone " +
+                        "${status.capability.availableFromMilestone} and must not be available",
+                    status.available
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `implemented capabilities are available`() {
         assertTrue(FeatureRegistry.isAvailable(Capability.DOMAIN_CORE))
         assertTrue(FeatureRegistry.isAvailable(Capability.APP_SHELL))
+        assertTrue(FeatureRegistry.isAvailable(Capability.LOCAL_PERSISTENCE))
+        assertTrue(FeatureRegistry.isAvailable(Capability.APP_LOCK))
+        assertTrue(FeatureRegistry.isAvailable(Capability.CREDENTIAL_VAULT))
     }
 
     @Test

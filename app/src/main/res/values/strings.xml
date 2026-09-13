@@ -6,4 +6,16 @@
     <string name="status_available">Available</string>
     <string name="status_unavailable">Unavailable until milestone %1$d</string>
     <string name="supported_user_types">Supported user types</string>
+    <string name="action_lock">Lock</string>
+
+    <string name="lock_title">Locked</string>
+    <string name="lock_unlock_hint">Enter the application password to unlock the credential vault. Nothing in this app can reach a provider credential until it is unlocked.</string>
+    <string name="lock_password_label">Application password</string>
+    <string name="lock_unlock_action">Unlock</string>
+    <string name="lock_create_title">Create an application password</string>
+    <string name="lock_create_hint">Choose at least %1$d characters. This password protects the stored provider and Twilio credentials.</string>
+    <string name="lock_confirm_label">Repeat the password</string>
+    <string name="lock_create_action">Create vault</string>
+    <string name="lock_create_warning">There is no recovery path. If the password is lost, the stored credentials cannot be decrypted and must be entered again.</string>
+    <string name="lock_dismiss">OK</string>
 </resources>

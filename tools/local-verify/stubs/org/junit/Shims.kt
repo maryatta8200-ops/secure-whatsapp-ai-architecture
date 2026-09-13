@@ -72,6 +72,20 @@ object Assert {
     @JvmStatic
     fun assertNotNull(value: Any?) = assertNotNull(null, value)
 
+    @JvmStatic
+    fun assertArrayEquals(expected: ByteArray, actual: ByteArray) {
+        if (!expected.contentEquals(actual)) {
+            throw AssertionError("byte arrays differ: <${expected.joinToString()}> vs <${actual.joinToString()}>")
+        }
+    }
+
+    @JvmStatic
+    fun assertArrayEquals(message: String?, expected: ByteArray, actual: ByteArray) {
+        if (!expected.contentEquals(actual)) {
+            throw AssertionError("$message byte arrays differ")
+        }
+    }
+
     /** Runs [runnable] and returns the throwable of type [expected] it threw. */
     @JvmStatic
     fun <T : Throwable> assertThrows(expected: Class<T>, runnable: () -> Unit): T {

@@ -78,6 +78,9 @@ kotlin {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":data"))
+
+    implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -91,4 +94,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(project(":core"))
+    testImplementation(project(":data"))
 }
