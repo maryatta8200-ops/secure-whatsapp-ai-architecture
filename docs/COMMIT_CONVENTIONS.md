@@ -38,6 +38,8 @@ Verified: <what was run and its result>
 - Never commit a change that has not been compiled or tested where it could
   have been. State in `Verified:` exactly what ran.
 - No secrets, tokens, phone numbers, keystores or `local.properties`.
+- Run the hygiene scanners **after** `git add`. They inspect tracked files, so a
+  scanner run before staging cannot see a file that has just been created.
 - Reference the milestone in the trailer so the commit can be tied back to
   [MILESTONES.md](MILESTONES.md).
 
