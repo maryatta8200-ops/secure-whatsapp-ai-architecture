@@ -40,10 +40,29 @@ channel runs in CI rather than locally.
 | Item | Value |
 | --- | --- |
 | Branch | `arena/01a098fa-secure-whatsapp-ai-architectur` |
+| Commits | `ba15c0c` domain core, `f863589` CI log channel, `1bbd398` import fix, `b5379ac` package alignment |
+| Verified commit | `b5379ac` |
 | Modules | `:core` (pure Kotlin/JVM), `:app` (Android, Compose) |
 | Local domain verification | `tools/local-verify/run.sh` — 90 tests, 90 passed, 0 failed (kotlinc compile + JVM execution) |
-| CI | see the workflow run linked from the commit status |
+| CI run | https://github.com/maryatta8200-ops/secure-whatsapp-ai-architecture/actions/runs/34739654935 |
+| CI `hygiene` | success — secret scan clean (64 tracked files), repository hygiene clean |
+| CI `core` | success — `:core:test` on JUnit 4 |
+| CI `android` | success — `:app:testDebugUnitTest`, `assembleDebug`, `assembleRelease`, `bundleRelease`, `lintDebug` (0 lint errors) |
+| Remote SHA check | local `b5379ac` == remote `b5379ac` |
 | Known limitations | The app shell renders capability status only. Persistence, providers, Twilio and messaging are marked unavailable in the UI and are not wired to anything. The release APK/AAB is unsigned unless `SECUREWA_KEYSTORE_PATH` and friends are supplied; R8 is disabled until milestone 9. |
+
+### Defects found by verification, not by inspection
+
+1. `FeatureRegistry` was imported from the wrong package and generated
+   resources were referenced as `com.securewa.app.R` — the app module did not
+   compile.
+2. Lint `MissingClass` on both manifest entries, because the manifest resolved
+   classes against the namespace `com.securewa.architecture` while the sources
+   declared `com.securewa.app`.
+
+Both were found in the Gradle output published by the CI failure channel and
+both were fixed at the root (namespace and source packages now agree) rather
+than suppressed.
 
 ### What milestone 1 deliberately does not do
 
