@@ -27,11 +27,9 @@ import android.widget.TextView;
 /**
  * A small, dependency-free demo of the SecureWA client surface.
  *
- * The app intentionally has no network permission. The screen demonstrates the
- * controls that belong on a secure messaging client while keeping the sample
- * interaction local to the device. A production build would hand the approved
- * request to a server-side provider gateway, never putting provider secrets in
- * this APK.
+ * The app keeps scanning and review local. Network access is optional and only
+ * goes to a user-configured HTTPS gateway; provider secrets never enter this
+ * APK. WhatsApp consumer integration remains an explicit user-mediated share.
  */
 public final class MainActivity extends Activity {
 
@@ -41,7 +39,6 @@ public final class MainActivity extends Activity {
     private static final int TEAL = Color.rgb(15, 118, 110);
     private static final int GREEN = Color.rgb(15, 145, 102);
     private static final int PALE_GREEN = Color.rgb(231, 248, 241);
-    private static final int PALE_BLUE = Color.rgb(235, 243, 252);
     private static final int PAGE = Color.rgb(246, 248, 251);
     private static final int CARD = Color.WHITE;
     private static final int BORDER = Color.rgb(224, 231, 239);
@@ -51,9 +48,12 @@ public final class MainActivity extends Activity {
     private EditText messageInput;
     private Button sendButton;
     private Button shareButton;
+    private Button gatewayButton;
+    private Button cloudButton;
     private TextView responseCard;
     private TextView responseLabel;
     private SecureStore secureStore;
+    private GatewayClient gatewayClient;
     private PrivacyScanner.ScanResult lastScan;
     private String lastSafeMessage;
     private boolean redactBeforeShare;
@@ -64,6 +64,7 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         secureStore = new SecureStore(this);
+        gatewayClient = new GatewayClient();
         redactBeforeShare = secureStore.isRedactionEnabled();
         keepAudit = secureStore.isAuditEnabled();
         configureWindow();
@@ -76,6 +77,12 @@ public final class MainActivity extends Activity {
         super.onNewIntent(intent);
         setIntent(intent);
         handleIncomingIntent(intent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (gatewayClient != null) gatewayClient.shutdown();
+        super.onDestroy();
     }
 
     private void handleIncomingIntent(Intent intent) {
@@ -341,6 +348,44 @@ public final class MainActivity extends Activity {
         shareParams.topMargin = dp(9);
         composer.addView(shareButton, shareParams);
 
+        gatewayButton = new Button(this);
+        gatewayButton.setText("Ask secure AI gateway");
+        gatewayButton.setTextColor(TEAL);
+        gatewayButton.setTextSize(14);
+        gatewayButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        gatewayButton.setAllCaps(false);
+        gatewayButton.setGravity(Gravity.CENTER);
+        gatewayButton.setPadding(dp(12), 0, dp(12), 0);
+        gatewayButton.setMinHeight(0);
+        gatewayButton.setMinWidth(0);
+        gatewayButton.setBackground(roundWithStroke(Color.WHITE, BORDER, 12, dp(1)));
+        gatewayButton.setContentDescription("Ask the configured secure AI gateway");
+        gatewayButton.setVisibility(View.GONE);
+        gatewayButton.setOnClickListener(v -> askSecureGateway());
+        LinearLayout.LayoutParams gatewayParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        gatewayParams.topMargin = dp(9);
+        composer.addView(gatewayButton, gatewayParams);
+
+        cloudButton = new Button(this);
+        cloudButton.setText("Send via WhatsApp Cloud API");
+        cloudButton.setTextColor(NAVY);
+        cloudButton.setTextSize(14);
+        cloudButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        cloudButton.setAllCaps(false);
+        cloudButton.setGravity(Gravity.CENTER);
+        cloudButton.setPadding(dp(12), 0, dp(12), 0);
+        cloudButton.setMinHeight(0);
+        cloudButton.setMinWidth(0);
+        cloudButton.setBackground(roundWithStroke(Color.WHITE, NAVY, 12, dp(1)));
+        cloudButton.setContentDescription("Send the reviewed message through WhatsApp Cloud API");
+        cloudButton.setVisibility(View.GONE);
+        cloudButton.setOnClickListener(v -> sendViaCloudApi());
+        LinearLayout.LayoutParams cloudParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        cloudParams.topMargin = dp(9);
+        composer.addView(cloudButton, cloudParams);
+
         LinearLayout.LayoutParams composerParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         composerParams.bottomMargin = dp(4);
@@ -376,6 +421,7 @@ public final class MainActivity extends Activity {
             responseLabel.setVisibility(View.VISIBLE);
             responseCard.setVisibility(View.VISIBLE);
             shareButton.setVisibility(View.VISIBLE);
+            updateGatewayActions();
             String preview = safeMessage.length() > 120
                     ? safeMessage.substring(0, 120).trim() + "…"
                     : safeMessage;
@@ -394,11 +440,126 @@ public final class MainActivity extends Activity {
         }, 520);
     }
 
-    private void shareToWhatsApp() {
-        if (lastSafeMessage == null || lastSafeMessage.length() == 0) {
-            messageInput.setError("Scan a message before sharing");
+    private void updateGatewayActions() {
+        if (gatewayButton == null || cloudButton == null) return;
+        String endpoint = secureStore.getGatewayEndpoint();
+        boolean gatewayConfigured = GatewayClient.isHttpsEndpoint(endpoint);
+        gatewayButton.setVisibility(View.VISIBLE);
+        gatewayButton.setText(gatewayConfigured
+                ? "Ask secure AI gateway" : "Configure secure AI gateway");
+
+        String recipient = secureStore.getWhatsAppRecipient();
+        boolean cloudConfigured = gatewayConfigured && GatewayClient.isE164(recipient);
+        cloudButton.setVisibility(View.VISIBLE);
+        cloudButton.setText(cloudConfigured
+                ? "Send via WhatsApp Cloud API" : "Configure Cloud API handoff");
+    }
+
+    private boolean refreshSafeMessage() {
+        if (messageInput == null) return false;
+        String input = messageInput.getText().toString().trim();
+        if (input.length() == 0) {
+            messageInput.setError("Type a private message first");
+            return false;
+        }
+        lastScan = PrivacyScanner.scan(input);
+        lastSafeMessage = redactBeforeShare ? lastScan.redactedText : input;
+        return true;
+    }
+
+    private void askSecureGateway() {
+        if (!refreshSafeMessage()) return;
+        String endpoint = secureStore.getGatewayEndpoint();
+        if (!GatewayClient.isHttpsEndpoint(endpoint)) {
+            showPrivacyDialog();
             return;
         }
+
+        gatewayButton.setEnabled(false);
+        gatewayButton.setText("Contacting secure gateway…");
+        gatewayClient.complete(endpoint, secureStore.getGatewayToken(), lastSafeMessage,
+                new GatewayClient.Callback() {
+                    @Override
+                    public void onSuccess(String message) {
+                        gatewayButton.setEnabled(true);
+                        updateGatewayActions();
+                        responseLabel.setVisibility(View.VISIBLE);
+                        responseCard.setVisibility(View.VISIBLE);
+                        responseCard.setText("✓  Secure gateway response\n\n" + limit(message, 4000)
+                                + "\n\nThe request sent to the gateway was the reviewed handoff text.");
+                        secureStore.saveAudit("gateway_complete|findings=" + lastScan.findingCount()
+                                + "|at=" + System.currentTimeMillis());
+                        addActivity("Secure AI response received", "Gateway credentials stayed server-side", GREEN, "now");
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        gatewayButton.setEnabled(true);
+                        updateGatewayActions();
+                        responseLabel.setVisibility(View.VISIBLE);
+                        responseCard.setVisibility(View.VISIBLE);
+                        responseCard.setText("Gateway unavailable\n\n" + message
+                                + "\n\nNo provider credential is stored in this APK.");
+                        addActivity("Gateway request failed", "No provider key was exposed", AMBER, "now");
+                    }
+                });
+    }
+
+    private void sendViaCloudApi() {
+        if (!refreshSafeMessage()) return;
+        String endpoint = secureStore.getGatewayEndpoint();
+        String recipient = secureStore.getWhatsAppRecipient();
+        if (!GatewayClient.isHttpsEndpoint(endpoint) || !GatewayClient.isE164(recipient)) {
+            showPrivacyDialog();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Send through WhatsApp Cloud API?")
+                .setMessage("This sends the reviewed text to " + recipient
+                        + " through your configured server gateway. Meta credentials stay on the server.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Send", (dialog, which) -> performCloudSend(endpoint, recipient))
+                .show();
+    }
+
+    private void performCloudSend(String endpoint, String recipient) {
+        cloudButton.setEnabled(false);
+        cloudButton.setText("Sending securely…");
+        gatewayClient.sendWhatsApp(endpoint, secureStore.getGatewayToken(), recipient, lastSafeMessage,
+                new GatewayClient.Callback() {
+                    @Override
+                    public void onSuccess(String message) {
+                        cloudButton.setEnabled(true);
+                        updateGatewayActions();
+                        responseLabel.setVisibility(View.VISIBLE);
+                        responseCard.setVisibility(View.VISIBLE);
+                        responseCard.setText("✓  WhatsApp Cloud API accepted the message\n\n"
+                                + message + "\n\nThe Meta access token remained on the gateway.");
+                        secureStore.saveAudit("whatsapp_cloud_send|redaction=" + redactBeforeShare
+                                + "|at=" + System.currentTimeMillis());
+                        addActivity("Cloud message accepted", "Meta credential stayed server-side", GREEN, "now");
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        cloudButton.setEnabled(true);
+                        updateGatewayActions();
+                        responseLabel.setVisibility(View.VISIBLE);
+                        responseCard.setVisibility(View.VISIBLE);
+                        responseCard.setText("Cloud API unavailable\n\n" + message);
+                        addActivity("Cloud send failed", "No direct Meta call from APK", AMBER, "now");
+                    }
+                });
+    }
+
+    private String limit(String value, int max) {
+        if (value == null) return "";
+        return value.length() > max ? value.substring(0, max).trim() + "…" : value;
+    }
+
+    private void shareToWhatsApp() {
+        if (!refreshSafeMessage()) return;
 
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("text/plain");
@@ -508,7 +669,7 @@ public final class MainActivity extends Activity {
         privacy.setContentDescription("Open privacy settings");
         footer.addView(privacy, wrap());
 
-        TextView note = label("No network permission  •  SecureWA 1.1", 11, MUTED, Typeface.NORMAL);
+        TextView note = label("HTTPS gateway only  •  SecureWA 1.2", 11, MUTED, Typeface.NORMAL);
         note.setGravity(Gravity.CENTER);
         note.setPadding(0, dp(4), 0, 0);
         footer.addView(note, wrap());
@@ -521,7 +682,7 @@ public final class MainActivity extends Activity {
         settings.setPadding(dp(6), dp(2), dp(6), 0);
 
         TextView summary = label(
-                "Choose what can leave this device. SecureWA never reads WhatsApp chats; sharing always requires your tap.",
+                "Choose what can leave this device. WhatsApp sharing is user-driven; the optional gateway must use HTTPS.",
                 13, MUTED, Typeface.NORMAL);
         summary.setLineSpacing(0, 1.12f);
         settings.addView(summary, wrap());
@@ -544,31 +705,102 @@ public final class MainActivity extends Activity {
         settings.addView(audit, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        TextView gatewayTitle = label("OPTIONAL SERVER GATEWAY", 10, TEAL, Typeface.BOLD);
+        gatewayTitle.setLetterSpacing(0.12f);
+        gatewayTitle.setPadding(0, dp(17), 0, dp(5));
+        settings.addView(gatewayTitle, wrap());
+
+        EditText endpoint = new EditText(this);
+        endpoint.setHint("https://your-gateway.example.com");
+        endpoint.setText(secureStore.getGatewayEndpoint());
+        endpoint.setTextColor(INK);
+        endpoint.setHintTextColor(Color.rgb(149, 162, 177));
+        endpoint.setTextSize(14);
+        endpoint.setSingleLine(true);
+        endpoint.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        endpoint.setPadding(dp(11), 0, dp(11), 0);
+        endpoint.setBackground(roundWithStroke(Color.WHITE, BORDER, 10, dp(1)));
+        endpoint.setContentDescription("HTTPS gateway URL");
+        settings.addView(endpoint, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+
+        EditText token = new EditText(this);
+        token.setHint("Gateway bearer token, if required");
+        token.setTextColor(INK);
+        token.setHintTextColor(Color.rgb(149, 162, 177));
+        token.setTextSize(14);
+        token.setSingleLine(true);
+        token.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        token.setPadding(dp(11), 0, dp(11), 0);
+        token.setBackground(roundWithStroke(Color.WHITE, BORDER, 10, dp(1)));
+        token.setContentDescription("Gateway bearer token");
+        LinearLayout.LayoutParams tokenParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        tokenParams.topMargin = dp(8);
+        settings.addView(token, tokenParams);
+
+        EditText recipient = new EditText(this);
+        recipient.setHint("Cloud API recipient, e.g. +923001234567");
+        recipient.setText(secureStore.getWhatsAppRecipient());
+        recipient.setTextColor(INK);
+        recipient.setHintTextColor(Color.rgb(149, 162, 177));
+        recipient.setTextSize(14);
+        recipient.setSingleLine(true);
+        recipient.setInputType(InputType.TYPE_CLASS_PHONE);
+        recipient.setPadding(dp(11), 0, dp(11), 0);
+        recipient.setBackground(roundWithStroke(Color.WHITE, BORDER, 10, dp(1)));
+        recipient.setContentDescription("WhatsApp Cloud API recipient in E.164 format");
+        LinearLayout.LayoutParams recipientParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        recipientParams.topMargin = dp(8);
+        settings.addView(recipient, recipientParams);
+
         TextView count = label("Encrypted entries on device: " + secureStore.auditCount(), 12, MUTED, Typeface.NORMAL);
         count.setPadding(0, dp(12), 0, 0);
         settings.addView(count, wrap());
 
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Privacy settings")
+                .setTitle("Privacy and connections")
                 .setView(settings)
                 .setNegativeButton("Clear audit", (d, which) -> {
                     secureStore.clearAudits();
                     addActivity("Audit vault cleared", "No message content was stored", AMBER, "now");
                 })
-                .setPositiveButton("Save", (d, which) -> {
+                .setPositiveButton("Save", null)
+                .create();
+        dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                .setOnClickListener(v -> {
+                    String endpointValue = endpoint.getText().toString().trim();
+                    String recipientValue = recipient.getText().toString().trim();
+                    if (endpointValue.length() > 0 && !GatewayClient.isHttpsEndpoint(endpointValue)) {
+                        endpoint.setError("Use a valid HTTPS URL");
+                        return;
+                    }
+                    if (recipientValue.length() > 0 && !GatewayClient.isE164(recipientValue)) {
+                        recipient.setError("Use E.164 format, for example +923001234567");
+                        return;
+                    }
+                    if (!secureStore.setGatewayToken(token.getText().toString())) {
+                        token.setError("Token could not be encrypted; it was not saved");
+                        return;
+                    }
                     redactBeforeShare = redact.isChecked();
                     keepAudit = audit.isChecked();
                     secureStore.setRedactionEnabled(redactBeforeShare);
                     secureStore.setAuditEnabled(keepAudit);
-                })
-                .create();
+                    secureStore.setGatewayEndpoint(endpointValue);
+                    secureStore.setWhatsAppRecipient(recipientValue);
+                    if (lastSafeMessage != null) refreshSafeMessage();
+                    updateGatewayActions();
+                    dialog.dismiss();
+                }));
         dialog.show();
     }
 
     private void showArchitectureDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("SecureWA architecture")
-                .setMessage("1. Device session\nMessages begin in a review surface.\n\n2. Policy boundary\nCommon PII is detected and redacted before sharing.\n\n3. WhatsApp handoff\nThe Android share sheet opens WhatsApp only after your tap; this app cannot read chats.\n\n4. Server-side AI gateway\nA production gateway should own provider credentials and select the least-privilege route.\n\nThis APK has no network permission and does not call an AI provider directly.")
+                .setMessage("1. Device session\nMessages begin in a review surface.\n\n2. Policy boundary\nCommon PII is detected and redacted before sharing.\n\n3. WhatsApp handoff\nThe Android share sheet opens WhatsApp only after your tap; this app cannot read chats.\n\n4. Server-side gateway\nThe optional HTTPS gateway owns AI-provider and Meta credentials. The APK sends only the reviewed text.\n\nDirect provider keys are never bundled in this APK.")
                 .setPositiveButton("Got it", null)
                 .show();
     }
@@ -637,5 +869,8 @@ public final class MainActivity extends Activity {
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+}
+splayMetrics().density);
     }
 }

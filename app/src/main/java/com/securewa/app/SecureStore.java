@@ -8,11 +8,9 @@ import android.util.Base64;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -33,6 +31,9 @@ public final class SecureStore {
     private static final String AUDIT_PREFIX = "audit_";
     private static final String REDACTION_ENABLED = "redaction_enabled";
     private static final String AUDIT_ENABLED = "audit_enabled";
+    private static final String GATEWAY_ENDPOINT = "gateway_endpoint";
+    private static final String GATEWAY_TOKEN = "gateway_token_encrypted";
+    private static final String WHATSAPP_RECIPIENT = "whatsapp_recipient";
 
     private final SharedPreferences preferences;
 
@@ -55,6 +56,48 @@ public final class SecureStore {
 
     public void setAuditEnabled(boolean enabled) {
         preferences.edit().putBoolean(AUDIT_ENABLED, enabled).apply();
+    }
+
+    public String getGatewayEndpoint() {
+        return preferences.getString(GATEWAY_ENDPOINT, "");
+    }
+
+    public void setGatewayEndpoint(String endpoint) {
+        preferences.edit().putString(GATEWAY_ENDPOINT, endpoint == null ? "" : endpoint.trim()).apply();
+    }
+
+    public String getGatewayToken() {
+        String encrypted = preferences.getString(GATEWAY_TOKEN, "");
+        if (encrypted.length() == 0) return "";
+        try {
+            return decrypt(encrypted);
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    public boolean setGatewayToken(String token) {
+        String value = token == null ? "" : token.trim();
+        if (value.length() == 0) {
+            preferences.edit().remove(GATEWAY_TOKEN).apply();
+            return true;
+        }
+        try {
+            preferences.edit().putString(GATEWAY_TOKEN, encrypt(value)).apply();
+            return true;
+        } catch (Exception ignored) {
+            // Never fall back to plaintext token storage.
+            return false;
+        }
+    }
+
+    public String getWhatsAppRecipient() {
+        return preferences.getString(WHATSAPP_RECIPIENT, "");
+    }
+
+    public void setWhatsAppRecipient(String recipient) {
+        preferences.edit().putString(WHATSAPP_RECIPIENT,
+                recipient == null ? "" : recipient.trim()).apply();
     }
 
     public boolean saveAudit(String event) {

@@ -12,3 +12,9 @@ local.properties
 
 # Generated deliverables are copied here by CI for download.
 artifacts/*.apk
+
+# Gateway secrets and local Python state
+gateway/.env
+gateway/*.pem
+gateway/*.key
+gateway/__pycache__/
