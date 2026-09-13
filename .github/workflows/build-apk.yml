@@ -34,7 +34,9 @@ jobs:
         run: gradle --no-daemon assembleDebug
 
       - name: Copy APK to a stable path
-        run: cp app/build/outputs/apk/debug/app-debug.apk artifacts/SecureWA-debug.apk
+        run: |
+          mkdir -p artifacts
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/SecureWA-debug.apk
 
       - name: Commit APK to the session branch
         run: |
