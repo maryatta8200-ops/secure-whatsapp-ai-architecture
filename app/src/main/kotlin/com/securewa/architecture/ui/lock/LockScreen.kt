@@ -34,7 +34,7 @@ import com.securewa.architecture.R
  */
 @Composable
 fun LockScreen(state: AppLockState) {
-    val lockState by state.lockState.collectAsState()
+    val lockState = state.lockState.collectAsState().value
 
     when (lockState) {
         LockState.NeedsPassword -> CreatePasswordCard(onCreate = state::createPassword)

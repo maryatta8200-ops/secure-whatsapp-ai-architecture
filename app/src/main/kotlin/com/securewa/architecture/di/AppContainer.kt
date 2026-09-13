@@ -1,8 +1,6 @@
 package com.securewa.architecture.di
 
 import android.content.Context
-import androidx.room.Room
-import com.securewa.data.db.SecureWaDatabase
 import com.securewa.data.vault.AndroidKeystorePlatformSealer
 import com.securewa.data.vault.FileVaultStorage
 import com.securewa.data.vault.VaultRepository
@@ -26,13 +24,5 @@ class AppContainer(context: Context) {
             storage = FileVaultStorage(File(applicationContext.filesDir, "vault")),
             platformSealer = AndroidKeystorePlatformSealer()
         )
-    }
-
-    val database: SecureWaDatabase by lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            SecureWaDatabase::class.java,
-            SecureWaDatabase.DATABASE_NAME
-        ).build()
     }
 }
