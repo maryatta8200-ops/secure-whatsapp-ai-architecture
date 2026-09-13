@@ -85,14 +85,14 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p build-logs
-          ./gradlew :app:testDebugUnitTest :app:assembleDebug --continue --stacktrace 2>&1 \
+          ./gradlew :app:testDebugUnitTest :data:testDebugUnitTest :app:assembleDebug --continue --stacktrace 2>&1 \
             | tee build-logs/android-unit-tests.log
 
       - name: release apk, aab and lint
         run: |
           set -o pipefail
           mkdir -p build-logs
-          ./gradlew :app:assembleRelease :app:bundleRelease :app:lintDebug --continue --stacktrace 2>&1 \
+          ./gradlew :app:assembleRelease :app:bundleRelease :app:lintDebug :data:lintDebug --continue --stacktrace 2>&1 \
             | tee build-logs/android-release.log
 
       - name: upload apk and aab
