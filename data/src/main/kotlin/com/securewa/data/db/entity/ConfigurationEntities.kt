@@ -29,7 +29,12 @@ data class UserSettingsEntity(
  */
 @Entity(tableName = "user_types")
 data class UserTypeEntity(
-    @PrimaryKey(name = "storage_key") val storageKey: String,
+    // Note: @PrimaryKey(name = ...) names the primary key *index*, not the
+    // column. The column name comes from @ColumnInfo, which is what the foreign
+    // keys and queries reference.
+    @PrimaryKey
+    @ColumnInfo(name = "storage_key")
+    val storageKey: String,
     @ColumnInfo(name = "display_name") val displayName: String,
     @ColumnInfo(name = "default_retention_days") val defaultRetentionDays: Int,
     @ColumnInfo(name = "sensitivity") val sensitivity: String
