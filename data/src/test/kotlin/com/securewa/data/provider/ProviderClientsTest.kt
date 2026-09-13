@@ -4,6 +4,7 @@ import com.securewa.core.provider.AiMessage
 import com.securewa.core.provider.CompletionOutcome
 import com.securewa.core.provider.CompletionRequest
 import com.securewa.core.provider.MessageRole
+import com.securewa.core.provider.ProviderFailure
 import com.securewa.core.provider.ProviderFailureKind
 import com.securewa.core.routing.ProviderKind
 import java.io.InterruptedIOException
