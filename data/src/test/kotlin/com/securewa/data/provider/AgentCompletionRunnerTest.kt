@@ -162,7 +162,7 @@ class AgentCompletionRunnerTest {
         server.shutdown()
 
         val run = runnerWhere(primary, secondary)
-            .run(primary, allowFallback(FallbackReason.entries.toSet()), request)
+            .run(primary, allowFallback(*FallbackReason.entries.toTypedArray()), request)
 
         val failed = run as CompletionRun.Failed
         assertEquals(ProviderFailureKind.NETWORK, failed.failure.kind)
