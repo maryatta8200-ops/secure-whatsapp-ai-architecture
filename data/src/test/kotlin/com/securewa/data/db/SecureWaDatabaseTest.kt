@@ -38,7 +38,11 @@ import org.robolectric.annotation.Config
  * annotations.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [35])
+// SDK 34, not the compile SDK 35: Robolectric only knows the API levels it
+// ships an android-all jar for, and asking for an unknown one fails the whole
+// class with UnknownSdk. These tests exercise SQLite only, so the exact
+// framework level is not what is under test.
+@Config(manifest = Config.NONE, sdk = [34])
 class SecureWaDatabaseTest {
 
     private lateinit var database: SecureWaDatabase
