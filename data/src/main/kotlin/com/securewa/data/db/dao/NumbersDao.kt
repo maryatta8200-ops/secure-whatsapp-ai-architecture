@@ -81,6 +81,10 @@ interface NumbersDao {
     @Query("SELECT * FROM twilio_configurations WHERE registered_number_id = :numberId")
     suspend fun twilioConfiguration(numberId: String): TwilioConfigurationEntity?
 
+    /** Used by the messaging client, which is handed a configuration id, not a number. */
+    @Query("SELECT * FROM twilio_configurations WHERE id = :id")
+    suspend fun twilioConfigurationById(id: String): TwilioConfigurationEntity?
+
     @Query("DELETE FROM twilio_configurations WHERE id = :id")
     suspend fun deleteTwilioConfiguration(id: String)
 

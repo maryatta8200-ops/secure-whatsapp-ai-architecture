@@ -1,5 +1,7 @@
 package com.securewa.core.provider
 
+import com.securewa.core.http.HttpStatusClassifier
+import com.securewa.core.http.HttpStatusOutcome
 import com.securewa.core.routing.ProviderKind
 
 /**
@@ -97,42 +99,35 @@ sealed interface CompletionOutcome {
  */
 object ProviderFailureClassifier {
 
-    fun classify(statusCode: Int, redactedBody: String = ""): ProviderFailure = when (statusCode) {
-        401, 403 -> ProviderFailure(
-            kind = ProviderFailureKind.AUTHENTICATION,
+    /**
+     * The retry decision itself lives in [HttpStatusClassifier], shared with the
+     * messaging client, so an AI endpoint and a Twilio endpoint that answer with
+     * the same status are treated the same way. This only names the outcome in
+     * the provider's own terms.
+     */
+    fun classify(statusCode: Int, redactedBody: String = ""): ProviderFailure {
+        val verdict = HttpStatusClassifier.verdictFor(statusCode)
+        val kind = when (verdict.outcome) {
+            HttpStatusOutcome.AUTHENTICATION -> ProviderFailureKind.AUTHENTICATION
+            HttpStatusOutcome.RATE_LIMITED -> ProviderFailureKind.RATE_LIMITED
+            HttpStatusOutcome.INVALID_REQUEST -> ProviderFailureKind.INVALID_REQUEST
+            HttpStatusOutcome.TIMEOUT -> ProviderFailureKind.TIMEOUT
+            HttpStatusOutcome.SERVER_ERROR,
+            HttpStatusOutcome.UNEXPECTED_STATUS -> ProviderFailureKind.SERVER_ERROR
+        }
+        val fallbackMessage = when (verdict.outcome) {
+            HttpStatusOutcome.AUTHENTICATION -> "the provider rejected the credential"
+            HttpStatusOutcome.RATE_LIMITED -> "the provider rate limited this credential"
+            HttpStatusOutcome.INVALID_REQUEST -> "the provider rejected the request"
+            HttpStatusOutcome.TIMEOUT -> "the provider timed out"
+            HttpStatusOutcome.SERVER_ERROR -> "the provider returned a server error"
+            HttpStatusOutcome.UNEXPECTED_STATUS -> "unexpected provider status $statusCode"
+        }
+        return ProviderFailure(
+            kind = kind,
             statusCode = statusCode,
-            message = redactedBody.ifBlank { "the provider rejected the credential" },
-            retryable = false
-        )
-        408, 409 -> ProviderFailure(
-            kind = ProviderFailureKind.TIMEOUT,
-            statusCode = statusCode,
-            message = redactedBody.ifBlank { "the provider timed out" },
-            retryable = true
-        )
-        429 -> ProviderFailure(
-            kind = ProviderFailureKind.RATE_LIMITED,
-            statusCode = statusCode,
-            message = redactedBody.ifBlank { "the provider rate limited this credential" },
-            retryable = true
-        )
-        in 400..499 -> ProviderFailure(
-            kind = ProviderFailureKind.INVALID_REQUEST,
-            statusCode = statusCode,
-            message = redactedBody.ifBlank { "the provider rejected the request" },
-            retryable = false
-        )
-        in 500..599 -> ProviderFailure(
-            kind = ProviderFailureKind.SERVER_ERROR,
-            statusCode = statusCode,
-            message = redactedBody.ifBlank { "the provider returned a server error" },
-            retryable = true
-        )
-        else -> ProviderFailure(
-            kind = ProviderFailureKind.SERVER_ERROR,
-            statusCode = statusCode,
-            message = redactedBody.ifBlank { "unexpected provider status $statusCode" },
-            retryable = false
+            message = redactedBody.ifBlank { fallbackMessage },
+            retryable = verdict.retryable
         )
     }
 
