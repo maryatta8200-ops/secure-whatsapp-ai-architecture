@@ -53,4 +53,23 @@ object AeadCipher {
         }
         return cipher.doFinal(sealed.ciphertext)
     }
+
+    /**
+     * The form a sealed value takes when it is stored: the nonce followed by the
+     * ciphertext, which is what a credential slot column holds.
+     */
+    fun encode(sealed: Sealed): ByteArray = sealed.nonce + sealed.ciphertext
+
+    /**
+     * @throws IllegalArgumentException when the bytes are too short to hold a
+     *         nonce, which means the stored value is truncated or corrupt rather
+     *         than encrypted with a different key.
+     */
+    fun decode(bytes: ByteArray): Sealed {
+        require(bytes.size > NONCE_BYTES) { "a sealed value must be longer than its $NONCE_BYTES byte nonce" }
+        return Sealed(
+            nonce = bytes.copyOfRange(0, NONCE_BYTES),
+            ciphertext = bytes.copyOfRange(NONCE_BYTES, bytes.size)
+        )
+    }
 }

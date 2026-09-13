@@ -59,7 +59,14 @@ enum class ProviderFailureKind {
     TIMEOUT,
     NETWORK,
     PARSE,
-    EMPTY_RESPONSE
+    EMPTY_RESPONSE,
+    /**
+     * The provider was never called: no credential in the slot, a locked vault,
+     * a disabled provider, or a base URL no credential may be sent to. Distinct
+     * from [NETWORK] because nothing left the device, and from [INVALID_REQUEST]
+     * because the request was never shown to be wrong.
+     */
+    UNAVAILABLE
 }
 
 /**
