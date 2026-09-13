@@ -28,7 +28,7 @@ channel runs in CI rather than locally.
 | 1 | Repository and domain core | Gradle multi-module skeleton, version catalog, Gradle wrapper, CI workflow, secret and hygiene scanners, documentation set, and the `:core` domain module: user types, E.164 validation, `NumberRouter`, Twilio signature validation, replay guard, idempotency keys, redaction, rate limiting, retry policy, health states, capability registry. Minimal Compose app shell that reports capability status. | ✅ verified — commit `4633aae`, CI run 34739654935 |
 | 2 | Local persistence | Room schema (numbers, user types and history, agents, routing rules, providers, credential slots, model configuration, conversations, messages, Twilio and channel configuration, inbound receipts, outbound attempts, agent events, application log), DAOs, foreign keys, indexes, unique constraints and deletion policies, verified by 18 Robolectric tests against real SQLite. Database encryption of message bodies is deferred to milestone 3, which introduces the key it needs. | ✅ verified — commit `e018ee9`, CI run 34741226163 |
 | 3 | Application lock and credential vault | PBKDF2-HMAC-SHA256 passphrase derivation, master key wrapped with the derived key, AES-256-GCM credential sealing bound to the credential slot, Android Keystore platform layer, lock screen gating the whole app, password rotation that re-wraps the master key. Backup/restore deferred to milestone 9. | ✅ verified — commit `94c7e12`, CI run 34742754401 |
-| 4 | AI provider adapters | Gemini, OpenAI, Anthropic and OpenAI-compatible adapters behind one provider interface; configuration snapshots; HTTP-level tests with a local mock server (status handling, auth headers, timeouts, parsing, rate limits). | planned |
+| 4 | AI provider adapters | Gemini, OpenAI, Anthropic and OpenAI-compatible adapters behind one provider interface; credentials resolved from the vault per call; explicitly configured fallback that records provider, model, credential slot and reason; HTTP-level tests with a local mock server (status handling, auth headers, timeouts, parsing, rate limits). | ✅ verified — commit `a8a06fc`, CI run 34746310776 |
 | 5 | Twilio messaging adapter | Authenticated Twilio REST client for outbound WhatsApp, status callback handling, connection-state checks. | planned |
 | 6 | Inbound receiver and message pipeline | `ReceiverClient` seam with the Twilio Functions + Sync implementation, pull/acknowledge/health, durable inbound processing, routing hand-off, provider call, outbound send, retries, idempotency, audit events; WorkManager scheduling. Includes the deployable Twilio Function source. | planned |
 | 7 | Number and agent management UI | Numbers, agents, providers, routing rules, per-number user type, real connectivity tests, enable/disable. | planned |
@@ -160,9 +160,108 @@ a single "failed".
 No UI exists yet for entering provider credentials; the vault is exercised by
 the lock screen and by tests. Encrypted backup and restore is milestone 9.
 
-### What milestone 1 deliberately does not do
+## Milestone 4 record
 
-- It does not send or receive a single WhatsApp message: no Twilio client exists yet.
-- It does not call any AI provider.
-- It does not persist anything.
-- It does not display a simulated dashboard, message list or connection status.
+| Item | Value |
+| --- | --- |
+| Commits | `0c28895` adapters, `9ca3006` scanner allowlist fix, `d81c5f4` body-read fix, `71ae4c2` import fix, `12e4d21` credentials and fallback, `a8a06fc` test fix |
+| Verified commit | `a8a06fc` |
+| Local domain verification | `tools/local-verify/run.sh` — 164 tests, 164 passed (2026-09-13 sandbox) |
+| CI run | https://github.com/maryatta8200-ops/secure-whatsapp-ai-architecture/actions/runs/34746310776 |
+| CI `android` | success — `:data:testDebugUnitTest` (20 adapter, 6 runner and 9 resolver tests), `:app:testDebugUnitTest`, `assembleDebug`, `assembleRelease`, `bundleRelease`, `lintDebug` (0 lint errors) |
+| Remote SHA check | verified locally after each push |
+
+### The provider contract
+
+`CompletionRequest`, `CompletionResponse` and `CompletionOutcome` live in the
+dependency-free `:core` module, so routing, fallback and auditing are written and
+tested without HTTP. Temperature is carried in thousandths (`700` = 0.7) because
+the value is persisted, hashed into configuration digests and logged, and
+integers have no rounding drift or locale-dependent formatting. Whether a
+failure may be retried is decided once, in `ProviderFailureClassifier`, rather
+than re-decided in each adapter.
+
+Adapters: `OpenAiCompatibleClient` (OpenAI, OpenRouter, Groq, Ollama, vLLM by
+base URL), `GeminiClient` (key in `x-goog-api-key`, never in the URL),
+`AnthropicClient` (version header, and `max_tokens` when the user configured
+none because the API requires one). The Gemini and Anthropic keys travel in
+headers for the same reason as everywhere else: URLs end up in logs, proxies and
+crash reports.
+
+### Credentials
+
+An agent's configuration names a **credential slot**; it holds no secret. The
+resolver reads the key from the vault at the moment of the call and hands it to
+the adapter, which puts it in a header and drops it. No key is written to the
+database, logged, or carried by the reference the router sees. OkHttp only
+accepts header values as strings, so the key does become one for the length of a
+single call; nothing retains it.
+
+A credential may only be sent over HTTPS, with one exception: the loopback
+interface, which is what people run Ollama or vLLM on and over which nothing
+crosses a network.
+
+The resolver refuses rather than guesses, and reports these separately because
+each needs something different from the user: slot deleted, slot not filled in
+yet, vault locked, stored bytes that will not open, provider row deleted,
+provider switched off, URL a key may not be sent to, and a slot holding another
+provider family's credential (a key must never cross provider families).
+
+### Fallback
+
+Fallback is the one place where a conversation can reach a provider the agent
+was not primarily configured with, so it is opt-in and recorded. A turn moves to
+the secondary only when the agent enabled it **and** allowed the reason that
+actually occurred. The chain is at most two providers long.
+
+A network failure is deliberately never a reason to fall back: not reaching a
+provider is a fact about the connection, not a verdict about the provider, and
+acting on it would hand the conversation to another organisation while the
+device is offline. A credential the provider rejected cannot be retried on that
+provider but can move the turn, so retryability and fallback are separate
+decisions.
+
+Every attempt is recorded with its provider, model and credential slot,
+including the attempts that never reached anyone, so a turn is never quietly
+unaccounted for.
+
+### Defects found by verification
+
+1. **A timeout was reported as a bad body.** Each adapter read the response body
+   inside `runCatching { JSONObject(response.body?.string()) }`. `runCatching`
+   catches `Throwable`, so the `SocketTimeoutException` thrown while the answer
+   was arriving was swallowed and reported as "the provider returned a body that
+   is not JSON" — untrue, and not retryable when the truth is that a retry could
+   well succeed. CI caught it (`expected:<TIMEOUT> but was:<PARSE>`). The
+   transport now owns the whole exchange, body included, and hands the parser
+   text; a transport failure can no longer reach the parser's error handling.
+2. The secret scanner passed locally and failed in CI, because it inspects
+   tracked files and was run before `git add`, so it could not see the new test.
+   The rule is now in [COMMIT_CONVENTIONS.md](COMMIT_CONVENTIONS.md): stage
+   first, then scan.
+3. Two compile errors in `:data` test sources (a missing `ProviderFailure`
+   import and a vararg that needed spreading), both caught by CI.
+
+### Known limitation carried forward
+
+Nothing yet constructs an `AgentRouteConfig` from persisted rows, and no UI
+exists for entering a credential, so the resolver and runner are exercised by
+tests rather than by the app. Wiring them to the database and the screens is
+milestone 7, which also adds the real connectivity test the spec asks for before
+a provider or a Twilio account can be marked connected.
+
+## What the app does not do after milestone 4
+
+Kept honest rather than optimistic: none of these are simulated, and the app
+says so in the UI.
+
+- It does not send or receive a WhatsApp message: no Twilio client exists yet
+  (milestone 5).
+- No agent configuration is loaded from the database yet, so no provider call
+  happens from the running app end to end (milestone 7). The adapters, the
+  credential resolver and the fallback runner are exercised by tests against
+  real sockets, a real database and a real vault.
+- It does not display a simulated dashboard, conversation list or connection
+  status.
+- The release APK/AAB is unsigned unless `SECUREWA_KEYSTORE_PATH` and friends
+  are supplied, and R8 stays off until milestone 9.
