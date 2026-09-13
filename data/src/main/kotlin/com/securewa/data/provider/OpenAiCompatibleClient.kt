@@ -7,7 +7,6 @@ import com.securewa.core.provider.CompletionResponse
 import com.securewa.core.provider.MessageRole
 import com.securewa.core.provider.ProviderFailureKind
 import okhttp3.OkHttpClient
-import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -51,13 +50,9 @@ class OpenAiCompatibleClient(http: OkHttpClient) : HttpProviderClient(http) {
         return perform(call, ::parse)
     }
 
-    private fun parse(response: Response): CompletionOutcome {
-        val failure = failureFor(response)
-        if (failure != null) return CompletionOutcome.Failure(failure)
-
-        val payload = runCatching {
-            JSONObject(response.body?.string().orEmpty())
-        }.getOrNull() ?: return parseFailure(ProviderFailureKind.PARSE, "the provider returned a body that is not JSON")
+    private fun parse(body: String): CompletionOutcome {
+        val payload = runCatching { JSONObject(body) }
+            .getOrNull() ?: return parseFailure(ProviderFailureKind.PARSE, "the provider returned a body that is not JSON")
 
         val choice = payload.optJSONArray("choices")?.optJSONObject(0)
             ?: return parseFailure(ProviderFailureKind.EMPTY_RESPONSE, "the provider returned no choices")

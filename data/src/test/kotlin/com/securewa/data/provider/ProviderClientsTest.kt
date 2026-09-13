@@ -6,8 +6,12 @@ import com.securewa.core.provider.CompletionRequest
 import com.securewa.core.provider.MessageRole
 import com.securewa.core.provider.ProviderFailureKind
 import com.securewa.core.routing.ProviderKind
+import java.io.InterruptedIOException
+import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -295,19 +299,78 @@ class ProviderClientsTest {
 
     // --- transport failures ----------------------------------------------------
 
+    /**
+     * The answer is read by the transport, not by the parser, so a connection
+     * that dies while the answer is still arriving is a transport failure and
+     * stays retryable. Reported as a bad body it would be neither true nor
+     * retryable, which is how this was first written.
+     */
     @Test
-    fun `a provider that does not answer in time reports a retryable timeout`() = runBlocking {
-        val impatient = OkHttpClient.Builder()
-            .connectTimeout(1, TimeUnit.SECONDS)
-            .readTimeout(150, TimeUnit.MILLISECONDS)
-            .build()
-        server.enqueue(jsonResponse("""{"choices":[{"message":{"content":"too late"}}]}""").setBodyDelay(2, TimeUnit.SECONDS))
+    fun `an answer that stops arriving is reported as a retryable timeout and not as a bad body`() =
+        runBlocking {
+            val impatient = OkHttpClient.Builder()
+                .connectTimeout(1, TimeUnit.SECONDS)
+                .readTimeout(150, TimeUnit.MILLISECONDS)
+                .build()
+            server.enqueue(jsonResponse("""{"choices":[{"message":{"content":"too late"}}]}""").setBodyDelay(2, TimeUnit.SECONDS))
 
-        val failure = (AiProviderClients.create(ProviderKind.OPENAI, impatient)
-            .complete(endpoint(ProviderKind.OPENAI), request) as CompletionOutcome.Failure).failure
+            val failure = (AiProviderClients.create(ProviderKind.OPENAI, impatient)
+                .complete(endpoint(ProviderKind.OPENAI), request) as CompletionOutcome.Failure).failure
+
+            assertEquals("the whole failure was $failure", ProviderFailureKind.TIMEOUT, failure.kind)
+            assertTrue(failure.retryable)
+        }
+
+    /**
+     * The failures below are injected with an application interceptor, which
+     * OkHttp runs before its own retry layer, so the exception reaches the
+     * adapter exactly as the socket produced it. They say how each family of
+     * transport failure is classified; the test above says that classification
+     * is reached at all when the body is what fails.
+     */
+    private fun clientThatFailsWith(error: Throwable) = OkHttpClient.Builder()
+        .addInterceptor(Interceptor { throw error })
+        .build()
+
+    private fun failureForTransport(error: Throwable): ProviderFailure = runBlocking {
+        val client = AiProviderClients.create(ProviderKind.OPENAI, clientThatFailsWith(error))
+        (client.complete(endpoint(ProviderKind.OPENAI), request) as CompletionOutcome.Failure).failure
+    }
+
+    @Test
+    fun `a socket read timeout is reported as a retryable timeout`() {
+        val failure = failureForTransport(SocketTimeoutException("timeout"))
 
         assertEquals(ProviderFailureKind.TIMEOUT, failure.kind)
         assertTrue(failure.retryable)
+    }
+
+    @Test
+    fun `a deadline that passed without a socket is reported as a retryable timeout`() {
+        val failure = failureForTransport(InterruptedIOException("timeout"))
+
+        assertEquals(ProviderFailureKind.TIMEOUT, failure.kind)
+        assertTrue(failure.retryable)
+    }
+
+    @Test
+    fun `a connection that is reset is reported as a retryable network failure`() {
+        val failure = failureForTransport(SocketException("Connection reset"))
+
+        assertEquals(ProviderFailureKind.NETWORK, failure.kind)
+        assertTrue(failure.retryable)
+    }
+
+    @Test
+    fun `an unexpected failure while reading is not retried and names the exception`() {
+        val failure = failureForTransport(IllegalStateException("closed"))
+
+        assertEquals(ProviderFailureKind.PARSE, failure.kind)
+        assertFalse(failure.retryable)
+        assertTrue(
+            "the failure has to name what went wrong so it can be diagnosed: $failure",
+            failure.message.contains("IllegalStateException")
+        )
     }
 
     @Test
