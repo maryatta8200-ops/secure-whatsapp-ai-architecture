@@ -27,7 +27,7 @@ channel runs in CI rather than locally.
 | --- | --- | --- | --- |
 | 1 | Repository and domain core | Gradle multi-module skeleton, version catalog, Gradle wrapper, CI workflow, secret and hygiene scanners, documentation set, and the `:core` domain module: user types, E.164 validation, `NumberRouter`, Twilio signature validation, replay guard, idempotency keys, redaction, rate limiting, retry policy, health states, capability registry. Minimal Compose app shell that reports capability status. | ✅ verified — commit `4633aae`, CI run 34739654935 |
 | 2 | Local persistence | Room schema (numbers, user types and history, agents, routing rules, providers, credential slots, model configuration, conversations, messages, Twilio and channel configuration, inbound receipts, outbound attempts, agent events, application log), DAOs, foreign keys, indexes, unique constraints and deletion policies, verified by 18 Robolectric tests against real SQLite. Database encryption of message bodies is deferred to milestone 3, which introduces the key it needs. | ✅ verified — commit `e018ee9`, CI run 34741226163 |
-| 3 | Application lock and credential vault | Passphrase-based application lock, Android Keystore-backed key, encrypted credential slots, encrypted backup/restore primitives. | planned |
+| 3 | Application lock and credential vault | PBKDF2-HMAC-SHA256 passphrase derivation, master key wrapped with the derived key, AES-256-GCM credential sealing bound to the credential slot, Android Keystore platform layer, lock screen gating the whole app, password rotation that re-wraps the master key. Backup/restore deferred to milestone 9. | ✅ verified — commit `94c7e12`, CI run 34742754401 |
 | 4 | AI provider adapters | Gemini, OpenAI, Anthropic and OpenAI-compatible adapters behind one provider interface; configuration snapshots; HTTP-level tests with a local mock server (status handling, auth headers, timeouts, parsing, rate limits). | planned |
 | 5 | Twilio messaging adapter | Authenticated Twilio REST client for outbound WhatsApp, status callback handling, connection-state checks. | planned |
 | 6 | Inbound receiver and message pipeline | `ReceiverClient` seam with the Twilio Functions + Sync implementation, pull/acknowledge/health, durable inbound processing, routing hand-off, provider call, outbound send, retries, idempotency, audit events; WorkManager scheduling. Includes the deployable Twilio Function source. | planned |
@@ -105,6 +105,60 @@ than suppressed.
 Message bodies are stored as plain text. The database is protected by
 `allowBackup=false`, the data extraction rules and device encryption, but the
 bodies are not sealed with an application key yet. That ships with milestone 3.
+
+## Milestone 3 record
+
+| Item | Value |
+| --- | --- |
+| Commits | `bf8d580` vault and lock, `2ab7ce9` Room encapsulation fix, `94c7e12` scaffold fix |
+| Verified commit | `94c7e12` |
+| Local domain verification | `tools/local-verify/run.sh` — 122 tests, 122 passed (2026-09-13 sandbox) |
+| Additional local verification | 20 vault tests compiled and run with kotlinc against the local JUnit shim |
+| CI run | https://github.com/maryatta8200-ops/secure-whatsapp-ai-architecture/actions/runs/34742754401 |
+| CI `android` | success — `:core:test`, `:data:testDebugUnitTest`, `:app:testDebugUnitTest`, `assembleDebug`, `assembleRelease`, `bundleRelease`, `lintDebug` (0 lint errors) |
+| Remote SHA check | verified locally after each push |
+
+### The three layers
+
+1. **Passphrase.** PBKDF2-HMAC-SHA256, 210,000 iterations, 16 byte per-install
+   salt, 256 bit output. The password is handled as a `CharArray` end to end, is
+   never converted to a String inside the vault, and is never stored.
+2. **Master key.** 32 random bytes, wrapped with the derived key using
+   AES-256-GCM. Credentials are sealed with the master key with the credential
+   slot id as associated data, so a ciphertext cannot be moved between slots.
+3. **Platform key.** The wrapped master key is sealed again with a
+   non-extractable AES-256-GCM key in the Android Keystore and written to a file
+   with an atomic rename, so a copy taken off the device is useless and a crash
+   mid-write cannot corrupt the envelope.
+
+Rotating the password re-wraps the master key; every stored credential stays
+readable, so changing the application password does not require re-entering
+provider keys.
+
+### Failure states that are reported separately
+
+`UnlockResult` distinguishes `WrongPassphrase`, `NoVault`, `PlatformFailure`
+(the device key cannot open the envelope, for example after a Keystore reset)
+and `CorruptEnvelope`. They have different remedies and are never collapsed into
+a single "failed".
+
+### Defects found by verification
+
+1. The fsync in `FileVaultStorage.write` reopened the file with
+   `File.outputStream()`, which truncates: every read returned an empty array.
+   Caught by the local vault tests, not by inspection.
+2. `AppContainer` referenced `androidx.room.Room`, which `:app` does not depend
+   on. Room stays inside `:data`.
+3. A delegated property cannot be smart cast, so the lock screen's `when` branch
+   on `LockState.Message` did not compile.
+4. Lint `UnusedMaterial3ScaffoldPaddingParameter`: adding the lock screen left
+   two Scaffolds, and the inner one ignored its padding. Screen chrome now
+   belongs to `AppRoot` alone.
+
+### Known limitation carried forward
+
+No UI exists yet for entering provider credentials; the vault is exercised by
+the lock screen and by tests. Encrypted backup and restore is milestone 9.
 
 ### What milestone 1 deliberately does not do
 

@@ -10,14 +10,20 @@ credentials and logs.
 WhatsApp user → Twilio → Android app → AI provider → Android app → Twilio → WhatsApp user
 ```
 
-## Status: milestone 1 (in progress)
+## Status: milestones 1-3 verified, milestone 4 next
 
-This repository is built incrementally. **Milestone 1 delivers the repository
-skeleton and the deterministic domain core.** The app installs and runs, and
-shows exactly which capabilities exist. It does not send or receive a WhatsApp
-message, call an AI provider, or persist anything yet — those are milestones 5,
-4 and 2 respectively, and the app marks them as unavailable rather than
-simulating them.
+This repository is built incrementally, one verified milestone at a time.
+
+**Done:** the deterministic domain core (user types, E.164, `NumberRouter`,
+Twilio signature validation, idempotency, redaction, rate limits, retries); the
+local Room persistence layer for numbers, agents, conversations and messages;
+and the credential vault behind an application password, which now gates the
+whole app.
+
+**Not done yet:** AI provider adapters (milestone 4), the Twilio client
+(milestone 5), the inbound receiver and message pipeline (milestone 6), and the
+number, agent, message and log screens (milestones 7 and 8). The app marks each
+of these as unavailable rather than simulating them.
 
 Read [docs/MILESTONES.md](docs/MILESTONES.md) for the plan and the verification
 record, and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design.
