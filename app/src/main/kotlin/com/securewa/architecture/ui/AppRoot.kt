@@ -1,6 +1,5 @@
 package com.securewa.architecture.ui
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -9,7 +8,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.securewa.architecture.R
 import com.securewa.architecture.ui.lock.AppLockState
@@ -44,7 +42,7 @@ fun AppRoot(lockState: AppLockState) {
                     )
                 }
             ) { padding ->
-                CapabilityScreen(modifier = Modifier.padding(padding))
+                CapabilityScreen(contentPadding = padding)
             }
         }
         else -> LockScreen(lockState)

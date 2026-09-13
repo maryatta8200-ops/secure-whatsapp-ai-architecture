@@ -13,11 +13,8 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,39 +34,36 @@ import com.securewa.core.model.UserType
  * deliver it, so no screen can imply that a workflow works before it is built
  * and verified.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CapabilityScreen(modifier: Modifier = Modifier) {
+fun CapabilityScreen(contentPadding: PaddingValues = PaddingValues(0.dp)) {
     val statuses = remember { FeatureRegistry.status() }
     val userTypes = remember { UserType.entries }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.capability_screen_title)) })
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = contentPadding.calculateTopPadding() + 16.dp,
+            bottom = contentPadding.calculateBottomPadding() + 16.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Text(
+                text = stringResource(R.string.capability_screen_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-    ) { padding ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                Text(
-                    text = stringResource(R.string.capability_screen_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            item {
-                MilestoneHeader()
-            }
-            item {
-                UserTypeCard(userTypes = userTypes)
-            }
-            items(statuses, key = { it.capability.name }) { status ->
-                CapabilityCard(status = status)
-            }
+        item {
+            MilestoneHeader()
+        }
+        item {
+            UserTypeCard(userTypes = userTypes)
+        }
+        items(statuses, key = { it.capability.name }) { status ->
+            CapabilityCard(status = status)
         }
     }
 }
