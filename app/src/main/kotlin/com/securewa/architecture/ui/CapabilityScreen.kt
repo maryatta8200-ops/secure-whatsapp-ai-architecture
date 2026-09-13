@@ -1,4 +1,4 @@
-package com.securewa.app.ui
+package com.securewa.architecture.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

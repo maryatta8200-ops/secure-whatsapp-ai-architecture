@@ -1,4 +1,4 @@
-package com.securewa.app
+package com.securewa.architecture
 
 import android.app.Application
 

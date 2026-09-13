@@ -1,4 +1,4 @@
-package com.securewa.app.ui
+package com.securewa.architecture.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.securewa.app.ui.theme.SecureWaTheme
+import com.securewa.architecture.ui.theme.SecureWaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

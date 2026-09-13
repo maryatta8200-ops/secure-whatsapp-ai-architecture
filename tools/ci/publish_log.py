@@ -73,10 +73,11 @@ def main() -> int:
     os.makedirs(destination, exist_ok=True)
     published = 0
     for log_dir in log_dirs:
-        for name in sorted(os.listdir(log_dir)):
-            source = os.path.join(log_dir, name)
-            if os.path.isfile(source):
-                shutil.copy2(source, os.path.join(destination, name))
+        for root, _dirs, files in os.walk(log_dir):
+            for name in sorted(files):
+                source = os.path.join(root, name)
+                relative = os.path.relpath(source, log_dir).replace(os.sep, "__")
+                shutil.copy2(source, os.path.join(destination, relative))
                 published += 1
 
     with open(os.path.join(destination, "RUN.txt"), "w", encoding="utf-8") as handle:

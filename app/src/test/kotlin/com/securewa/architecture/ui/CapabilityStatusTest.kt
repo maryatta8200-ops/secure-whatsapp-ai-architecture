@@ -1,4 +1,4 @@
-package com.securewa.app.ui
+package com.securewa.architecture.ui
 
 import com.securewa.core.capability.Capability
 import com.securewa.core.capability.FeatureRegistry

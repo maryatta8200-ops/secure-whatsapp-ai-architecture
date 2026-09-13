@@ -1,4 +1,4 @@
-package com.securewa.app.ui.theme
+package com.securewa.architecture.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
