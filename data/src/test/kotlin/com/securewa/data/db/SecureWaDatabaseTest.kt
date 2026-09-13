@@ -8,11 +8,13 @@ import androidx.test.core.app.ApplicationProvider
 import com.securewa.data.db.entity.AgentEntity
 import com.securewa.data.db.entity.AgentEventEntity
 import com.securewa.data.db.entity.AgentRoutingRuleEntity
+import com.securewa.data.db.entity.AiProviderEntity
 import com.securewa.data.db.entity.AppLogEntity
 import com.securewa.data.db.entity.ConversationEntity
 import com.securewa.data.db.entity.CredentialSlotEntity
 import com.securewa.data.db.entity.InboundMessageReceiptEntity
 import com.securewa.data.db.entity.MessageEntity
+import com.securewa.data.db.entity.ModelConfigurationEntity
 import com.securewa.data.db.entity.RegisteredNumberEntity
 import com.securewa.data.db.entity.UserSettingsEntity
 import com.securewa.data.db.entity.UserTypeHistoryEntity
@@ -69,8 +71,34 @@ class SecureWaDatabaseTest {
         database.close()
     }
 
-    private fun seedUserTypes() = runBlocking {
+    /**
+     * Seeds the reference rows an agent is required to point at. Agents carry a
+     * foreign key to a model configuration, so a test that inserts an agent
+     * without a model fails with a constraint violation: the database is right
+     * and the fixture was incomplete.
+     */
+    private fun seedReferenceData() = runBlocking {
         database.numbersDao().upsertUserTypes(UserTypeSeed.entities())
+        database.providersDao().insertProvider(
+            AiProviderEntity(
+                id = "provider-1",
+                providerKind = "GEMINI",
+                displayName = "Gemini",
+                baseUrl = "https://generativelanguage.googleapis.com",
+                createdAt = 1_000L,
+                updatedAt = 1_000L
+            )
+        )
+        database.providersDao().upsertModel(
+            ModelConfigurationEntity(
+                id = "model-1",
+                providerId = "provider-1",
+                modelId = "gemini-1.5-pro",
+                displayName = "Gemini 1.5 Pro",
+                createdAt = 1_000L,
+                updatedAt = 1_000L
+            )
+        )
     }
 
     private fun doctorNumber(
@@ -117,7 +145,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `the three supported user types exist and are referenceable`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         val types = database.numbersDao().userTypes()
         assertEquals(3, types.size)
         assertEquals(listOf("common_user", "doctor", "patient"), types.map { it.storageKey })
@@ -126,7 +154,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `a registered number can be read back by e164`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber())
         val stored = database.numbersDao().numberByE164("+15551000001")
         assertNotNull(stored)
@@ -136,7 +164,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `the same number cannot be registered twice`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber(id = "num-1"))
         val duplicate = runCatching {
             database.numbersDao().insertNumber(doctorNumber(id = "num-2"))
@@ -149,7 +177,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `an unknown user type is rejected by the foreign key`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         val invalid = runCatching {
             database.numbersDao().insertNumber(doctorNumber(userTypeKey = "nurse"))
         }
@@ -162,7 +190,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `changing a user type records history atomically`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber())
         database.numbersDao().changeUserType(
             number = doctorNumber(userTypeKey = "patient").copy(updatedAt = 2_000L),
@@ -187,7 +215,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `deleting an agent keeps its conversations and messages`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber())
         database.agentsDao().insertAgent(agent())
         val conversation = ConversationEntity(
@@ -226,7 +254,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `deleting a number removes its agents but keeps its conversations`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber())
         database.agentsDao().insertAgent(agent())
         database.messagingDao().insertConversation(
@@ -254,7 +282,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `two agents can share a credential slot without sharing anything else`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber())
         database.providersDao().insertCredentialSlot(
             CredentialSlotEntity(
@@ -287,7 +315,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `routing rules are returned in evaluation order`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber())
         database.agentsDao().insertAgent(agent(id = "agent-a1"))
         database.agentsDao().insertAgent(agent(id = "agent-a2"))
@@ -377,7 +405,7 @@ class SecureWaDatabaseTest {
 
     @Test
     fun `message reads are bounded by a window`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber())
         database.agentsDao().insertAgent(agent())
         database.messagingDao().insertConversation(
@@ -420,13 +448,13 @@ class SecureWaDatabaseTest {
                 AppLogEntity(timestamp = index.toLong(), level = "INFO", tag = "Test", messageRedacted = "entry $index")
             )
         }
-        assertEquals(2, database.auditDao().trimLogsBefore(cutoff = 3L))
-        assertEquals(3, database.auditDao().logCount())
+        assertEquals(3, database.auditDao().trimLogsBefore(cutoff = 3L))
+        assertEquals(2, database.auditDao().logCount())
     }
 
     @Test
     fun `audit events survive the deletion of the agent they describe`() = runBlocking {
-        seedUserTypes()
+        seedReferenceData()
         database.numbersDao().insertNumber(doctorNumber())
         database.agentsDao().insertAgent(agent())
         database.auditDao().insertAgentEvent(
