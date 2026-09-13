@@ -24,7 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.securewa.capability.FeatureRegistry
+import com.securewa.architecture.R
+import com.securewa.core.capability.FeatureRegistry
 import com.securewa.core.capability.FeatureStatus
 import com.securewa.core.model.UserType
 
@@ -44,7 +45,7 @@ fun CapabilityScreen() {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(stringResource(com.securewa.app.R.string.capability_screen_title)) })
+            TopAppBar(title = { Text(stringResource(R.string.capability_screen_title)) })
         }
     ) { padding ->
         LazyColumn(
@@ -56,7 +57,7 @@ fun CapabilityScreen() {
         ) {
             item {
                 Text(
-                    text = stringResource(com.securewa.app.R.string.capability_screen_subtitle),
+                    text = stringResource(R.string.capability_screen_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -100,7 +101,7 @@ private fun UserTypeCard(userTypes: List<UserType>) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(com.securewa.app.R.string.supported_user_types),
+                text = stringResource(R.string.supported_user_types),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -149,10 +150,10 @@ private fun StatusChip(status: FeatureStatus) {
         label = {
             Text(
                 if (status.available) {
-                    stringResource(com.securewa.app.R.string.status_available)
+                    stringResource(R.string.status_available)
                 } else {
                     stringResource(
-                        com.securewa.app.R.string.status_unavailable,
+                        R.string.status_unavailable,
                         status.availableFromMilestone
                     )
                 }
