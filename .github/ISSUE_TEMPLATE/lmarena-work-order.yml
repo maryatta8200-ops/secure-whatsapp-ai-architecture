@@ -1,0 +1,108 @@
+name: LMArena automated-work order
+description: Request bounded, reviewable agent work that follows this repository's documented contract.
+title: "[LMArena] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Plan- and gate-traced automated work
+        This form creates a bounded work order for an LMArena/LMarena coding agent or another
+        coding agent. It does **not** authorize a merge, a milestone verification, a schema or
+        contract change, or a security-posture change by itself. The agent must follow the root
+        `AGENTS.md` contract and the documents that are actually present on the branch it works on.
+
+        Note: the default branch currently records no master plan, milestone record, or decision
+        log. If your request depends on a gate, cite the document that records it, or state clearly
+        that maintainer clarification is required before implementation.
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective and bounded deliverable
+      description: State the smallest useful outcome, the affected files or modules, and what is explicitly out of scope.
+      placeholder: |
+        Objective:
+        Affected files/modules:
+        Out of scope:
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceability
+    attributes:
+      label: Governing-document and gate traceability
+      description: Cite the exact sections that authorize this work (for example README "Security posture", gateway/README.md "Contract", docs/MILESTONES.md, a decision record, or this issue). State the branch and commit the agent must start from.
+      placeholder: |
+        Governing document sections:
+        Milestone/gate record (or "none documented - clarification required"):
+        Starting branch and commit:
+        Why this work is allowed at the current state:
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stage_impact
+    attributes:
+      label: Stage impact
+      description: The agent verifies the live state from the repository before acting and must not invent a milestone or gate.
+      options:
+        - No milestone or gate change - documentation, test, or maintenance work
+        - Compatible correction within the shipped client/gateway contract
+        - Depends on a milestone or gate - reference it above, or request clarification first
+        - Proposal or draft only - no implementation
+        - Unsure - request maintainer clarification before any code change
+    validations:
+      required: true
+
+  - type: textarea
+    id: contract
+    attributes:
+      label: Inputs, outputs, and acceptance criteria
+      description: Define the contract and the measurable proof of completion, including the tests or measurements the agent must run and report.
+      placeholder: |
+        Inputs:
+        Outputs:
+        Acceptance criteria:
+        Tests/measurements to run:
+        Known limitations that must be preserved or documented:
+    validations:
+      required: true
+
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Security, privacy, data, cost, and rollback constraints
+      description: Identify data handling (message content, phone numbers, PII), network or permission exposure, expected CI or provider cost, artifact compatibility, and how to back the change out.
+      placeholder: |
+        Data/privacy constraints:
+        Security/network/permission constraints:
+        Expected cost (CI minutes, provider calls, benchmarks):
+        Compatibility and rollback path:
+    validations:
+      required: true
+
+  - type: textarea
+    id: authorization
+    attributes:
+      label: Required maintainer authorization or decision reference
+      description: Required when the work affects a milestone/gate, the gateway contract or other public behavior, dependencies or build configuration, the tracked APK or golden outputs, a benchmark or security claim, data handling, or either workflow. Write "not needed" only for routine scoped maintenance inside the documented contract, and say why.
+      placeholder: |
+        Maintainer approval or decision reference:
+        Files/records this approval permits the agent to change:
+        Explicitly not permitted:
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Acknowledgements
+      options:
+        - label: I understand the agent must stop and ask rather than invent a missing gate, milestone, acceptance criterion, or scope decision.
+          required: true
+        - label: I understand the agent must not add secrets, credentials, raw or personal message data, and must not auto-merge, force-push, rewrite history, or weaken CI.
+          required: true
+        - label: I understand an agent may not mark work or a milestone as verified; only recorded evidence plus a maintainer decision can do that.
+          required: true
+        - label: I will review the evidence and retain final merge, milestone-verification, and tagging authority.
+          required: true

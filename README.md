@@ -51,3 +51,24 @@ To test the inbound share flow from another Android app:
 1. Select text and tap **Share**.
 2. Choose **SecureWA**.
 3. Review the imported text, scan it, then choose whether to share it onward.
+
+## Automated work with coding agents
+
+Bounded, reviewable work by an LMArena/LMarena agent or another coding agent is described in:
+
+- [`AGENTS.md`](AGENTS.md) - the provider-neutral operating contract: precedence of controlling
+  documents, preflight and evidence rules, the stop-before-you-change list, and the completion report.
+- [`docs/automation/lmarena-agent.md`](docs/automation/lmarena-agent.md) - the operator guide: how to
+  submit bounded work, least-privilege access, isolated branches, and the repository checks.
+- [`.github/ISSUE_TEMPLATE/lmarena-work-order.yml`](.github/ISSUE_TEMPLATE/lmarena-work-order.yml) -
+  the work-order form a maintainer uses to authorize a task.
+
+The contract is guidance, not a security boundary: it assumes a maintainer reviews every change, and
+it requires the agent to stop rather than invent a gate or an acceptance criterion. This repository
+contains no provider credentials, browser credentials, webhooks, autonomous scheduling, or
+auto-merge permissions, and the setup adds none - agents work on an isolated branch and propose a
+pull request, which is the only path a change takes to `main`.
+
+`main` currently records no master plan, milestone record, or decision log, so an agent must ask a
+maintainer rather than assume a stage or gate; an unmerged pull request proposes that governance and
+is not authoritative until it is adopted.
